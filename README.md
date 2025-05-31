@@ -48,44 +48,163 @@ ollama pull llama3.2
 
 ## Usage
 
+First, activate the micromamba environment:
+
+```bash
+# Activate the publication_reader environment
+micromamba activate publication_reader
+
+# Or, if you prefer to use the environment just for a single command:
+# micromamba run -n publication_reader <command>
+```
+
 The application provides a command-line interface with several commands:
 
 ### Basic Commands
 
 ```bash
 # Fetch new publications from configured RSS feeds
-micromamba run -n publication_reader python -m publication_reader fetch
+python -m publication_reader fetch
 
 # Analyze unprocessed publications
-micromamba run -n publication_reader python -m publication_reader analyze
+python -m publication_reader analyze
 
 # Generate and display a report for today
-micromamba run -n publication_reader python -m publication_reader report --generate
+python -m publication_reader report --generate
 
 # Run the full pipeline (fetch, analyze, report)
-micromamba run -n publication_reader python -m publication_reader run
+python -m publication_reader run
 ```
 
 ### Additional Commands
 
 ```bash
 # List available reports
-micromamba run -n publication_reader python -m publication_reader list --reports
+python -m publication_reader list --reports
 
 # List recent publications with minimum relevance score
-micromamba run -n publication_reader python -m publication_reader list --publications --days 7 --min-relevance 5
+python -m publication_reader list --publications --days 7 --min-relevance 5
 
 # Show details for a specific publication
-micromamba run -n publication_reader python -m publication_reader show <publication_id>
+python -m publication_reader show <publication_id>
 
 # Reanalyze publications from a specific date
-micromamba run -n publication_reader python -m publication_reader analyze --date 2025-05-30 --reanalyze
+python -m publication_reader analyze --date 2025-05-30 --reanalyze
 
 # Reset the database (useful for debugging)
-micromamba run -n publication_reader python -m publication_reader reset
+python -m publication_reader reset
 
 # Reset without confirmation prompt
-micromamba run -n publication_reader python -m publication_reader reset --force
+python -m publication_reader reset --force
+```
+
+### Advanced Usage
+
+This section demonstrates more complex workflows and advanced options for working with the publication reader.
+
+#### Viewing Individual Publications
+
+To view detailed information about a specific publication, including its abstract, relevance score, and LLM-generated summary:
+
+```bash
+# Show publication with ID 5
+python -m publication_reader show 5
+```
+
+Example output:
+
+```
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Seasonal and Interannual Variability of the Aragonite Saturation Horizon   │
+│                in the California Current System of Baja California           │
+│                                                                              │
+│  ID: 5 | Date: 2025-05-28 | Journal: JGR Oceans | Relevance: 4/10           │
+│  URL: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021884      │
+│                                                                              │
+│  Abstract:                                                                   │
+│  This study investigated the factors influencing the seasonal and            │
+│  interannual variability of the aragonite saturation horizon (ASH) in the    │
+│  California Current System off Baja California. We used hydrographic data    │
+│  collected from 2004 to 2022 to construct regression models between ASH      │
+│  depth and variables such as dissolved inorganic carbon, sea surface         │
+│  temperature, salinity, dissolved oxygen, and atmospheric CO2                │
+│  concentrations. We found that sea surface temperature and atmospheric CO2   │
+│  explain most of the ASH variability on seasonal and interannual scales.     │
+│  Our results show a shoaling ASH trend of ‐1.14±0.49 m yr‐1, confirming     │
+│  that ocean acidification is affecting the region.                           │
+│                                                                              │
+│  LLM Analysis:                                                               │
+│  Relevance Score: 4/10                                                       │
+│  Explanation: This study focuses on ocean acidification in the California    │
+│  Current System rather than the Arctic or Southern Ocean. While it does      │
+│  relate to climate change impacts on marine environments, it doesn't         │
+│  specifically address the interests of Arctic ocean, sea ice, or climate     │
+│  modeling in polar regions.                                                  │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### Filtering Publications by Date and Relevance
+
+Filter publications by date range and minimum relevance score:
+
+```bash
+# List publications from the last 14 days with relevance score of at least 6
+python -m publication_reader list --publications --days 14 --min-relevance 6
+
+# List publications from a specific date range
+python -m publication_reader list --publications --from-date 2025-05-01 --to-date 2025-05-31 --min-relevance 5
+```
+
+#### Reanalyzing Publications
+
+Reanalyze publications if you've changed your interests or LLM configuration:
+
+```bash
+# Reanalyze all publications
+python -m publication_reader analyze --reanalyze
+
+# Reanalyze publications from a specific date
+python -m publication_reader analyze --date 2025-05-30 --reanalyze
+
+# To reanalyze specific publications, you'll need to reset and selectively fetch
+# For example, to reanalyze only certain journals, you would modify your config.yaml
+# temporarily to include only those feeds, then run:
+python -m publication_reader reset --force
+python -m publication_reader fetch
+python -m publication_reader analyze
+```
+
+#### Working with Reports
+
+Generate and view reports:
+
+```bash
+# Generate a report for today
+python -m publication_reader report --generate
+
+# Generate a report for a specific date
+python -m publication_reader report --generate --date 2025-05-30
+
+# View a report for a specific date
+python -m publication_reader report --date 2025-05-30
+```
+
+> Note: The minimum relevance for reports is configured in the `config.yaml` file under the `reports` section. To customize this, update your configuration file.
+
+#### Debugging
+
+The application includes debug output in the analyzer to show LLM prompts and responses. This output is always enabled when running the analyze command.
+
+For troubleshooting database issues, you can reset the database:
+
+```bash
+# Reset the database (will prompt for confirmation)
+python -m publication_reader reset
+
+# Force reset without confirmation
+python -m publication_reader reset --force
 ```
 
 ## Configuration
@@ -133,7 +252,10 @@ To run the application automatically, you can set up a cron job:
 ```bash
 #!/bin/bash
 export PATH="/path/to/micromamba/bin:$PATH"
-micromamba run -n publication_reader python -m publication_reader run
+
+# Activate the environment and run the command
+micromamba activate publication_reader
+python -m publication_reader run
 ```
 
 2. Make the script executable:
