@@ -130,7 +130,7 @@ class OllamaAnalyzer:
             explanation = explanation_match.group(1).strip() if explanation_match else ""
             
             print(f"\n[DEBUG] FINAL RELEVANCE SCORE: {relevance_score}/10")
-            print("-"*80)
+
             
             return relevance_score, explanation
         
@@ -161,7 +161,7 @@ class OllamaAnalyzer:
             prompt += f"Abstract: {abstract}\n\n"
             prompt += f"This publication has been rated {relevance_score}/10 for relevance.\n\n"
             prompt += f"IMPORTANT: Be EXTREMELY concise. Limit your entire response to 1-2 sentences total.\n"
-            prompt += f"Just provide a single concise statement about what the paper does and why it's relevant to our interests.\n"
+            prompt += f"Just provide a single concise statement about what the paper does.\n"
             
             response = ollama.chat(
                 model=self.model, 
@@ -173,19 +173,14 @@ class OllamaAnalyzer:
                 ]
             )
             
-            # Get the raw summary and ensure it's brief
+            # Get the raw summary without truncation
             summary_text = response['message']['content'].strip()
-            
-            # If it's extremely long, truncate and add ellipsis
-            max_length = 500  # Characters - allows for 2-3 meaningful sentences
-            if len(summary_text) > max_length:
-                # Try to find a sentence boundary to truncate at
-                last_period = summary_text[:max_length].rfind('.')
-                if last_period > max_length * 0.7:  # If we have a decent amount of text before truncating
-                    summary_text = summary_text[:last_period+1]
-                else:  # Otherwise just truncate at max_length
-                    summary_text = summary_text[:max_length] + "..."
-            
+
+            print(f"[DEBUG] LLM SUMMARY:")
+            print("-"*80)
+            print(f"{summary_text}")
+            print("="*80)
+
             return summary_text
         except Exception as e:
             print(f"Error generating summary: {str(e)}")

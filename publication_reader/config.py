@@ -81,7 +81,7 @@ DEFAULT_CONFIG = {
         {
         "name": "Progress in Oceanography",
         "type": "crossref",
-        "issn": "873-4472"
+        "issn": "1873-4472"
         },
         {
         "name": "Reviews of Geophysics",
@@ -139,17 +139,23 @@ DEFAULT_CONFIG = {
         "Arctic ocean", 
         "climate modelling", 
         "high resolution modelling", 
-        # "artificial intelligence", 
-        # "machine learning", 
+        "artificial intelligence", 
+        "machine learning", 
+        "ocean modelling",
+        "kilometer scale modelling",
+        "mesoscale modelling",
         "sea ice", 
+        "ocean eddy",
+        "ocean eddies",
+        "FESOM",
         "Southern Ocean", 
         "climate change"
     ],
     "ollama": {
-        "model": "llama3.2",
+        "model": "gemma3:27b", # default is llama3.2, but gemma3:27b works and show better results
         "host": "http://localhost:11434",
-        "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences).",
-        "summary_prompt": "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings and briefly explain its relevance to the following interests: {interests}."
+        "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences)",
+        "summary_prompt": "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings."
     },
     "reports": {
         "path": "~/.local/share/publication_reader/reports",
