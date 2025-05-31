@@ -17,6 +17,7 @@ from publication_reader.db.database import Database
 from publication_reader.feeds.parser import FeedParser
 from publication_reader.llm.analyzer import OllamaAnalyzer
 from publication_reader.reports.generator import ReportGenerator
+from publication_reader.web.static_site_generator import StaticSiteGenerator
 
 
 class CLI:
@@ -32,6 +33,11 @@ class CLI:
         self.report_generator = ReportGenerator(
             reports_path=self.config.get_reports_path(),
             min_relevance=self.config.get_min_relevance()
+        )
+        # Initialize the static site generator
+        self.site_generator = StaticSiteGenerator(
+            reports_path=self.config.get_reports_path(),
+            output_path=self.config.get_web_path()
         )
     
     def run(self, args: Optional[List[str]] = None) -> None:
@@ -60,6 +66,8 @@ class CLI:
             self._handle_run(parsed_args)
         elif command == 'reset':
             self._handle_reset(parsed_args)
+        elif command == 'web':
+            self._handle_web(parsed_args)
         else:
             # Default to showing help
             parser.print_help()
@@ -100,14 +108,19 @@ class CLI:
         show_parser = subparsers.add_parser('show', help='Show publication details')
         show_parser.add_argument('id', type=int, help='Publication ID')
         
-        # Run command (does everything)
-        run_parser = subparsers.add_parser('run', help='Run the full pipeline (fetch, analyze, report)')
+        # Run command - performs fetch, analyze, report in sequence
+        run_parser = subparsers.add_parser('run', help='Run the full workflow: fetch, analyze, and report')
+        run_parser.add_argument('--serve', action='store_true', help='Start a local web server after generating the site')
         run_parser.add_argument('--reanalyze', action='store_true', help='Reanalyze already processed publications')
         
-        # Reset command (wipe database)
-        reset_parser = subparsers.add_parser('reset', help='Reset the database (WARNING: destroys all data)')
-        reset_parser.add_argument('--force', action='store_true', help='Skip confirmation prompt')
+        # Reset command
+        reset_parser = subparsers.add_parser('reset', help='Reset the publication reader')
+        reset_parser.add_argument('--force', action='store_true', help='Force reset without confirmation')
         reset_parser.add_argument('--keep-config', action='store_true', help='Keep configuration files')
+        
+        # Web command
+        web_parser = subparsers.add_parser('web', help='Generate static website from reports')
+        web_parser.add_argument('--serve', action='store_true', help='Start a local web server to preview the site')
         
         return parser
     
@@ -450,9 +463,62 @@ class CLI:
         
         # Analyze publications
         self.console.print("\n[bold]Step 2: Analyzing publications...[/bold]")
-        self._handle_analyze(args)
+        analyze_args = argparse.Namespace(date=None, reanalyze=False)
+        self._handle_analyze(analyze_args)
         
         # Generate report
         self.console.print("\n[bold]Step 3: Generating report...[/bold]")
         report_args = argparse.Namespace(date=None, generate=True)
         self._handle_report(report_args)
+        
+        # Generate static website
+        self.console.print("\n[bold]Step 4: Generating static website...[/bold]")
+        web_args = argparse.Namespace(serve=getattr(args, 'serve', False))
+        self._handle_web(web_args)
+        
+    def _handle_web(self, args: argparse.Namespace) -> None:
+        """Handle the web command.
+        
+        Args:
+            args: Parsed arguments
+        """
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]Generating static website..."),
+            transient=True,
+        ) as progress:
+            progress.add_task("Generating", total=None)
+            self.site_generator.generate_site()
+        
+        self.console.print(f"[bold green]Static website generated at: {self.config.get_web_path()}[/bold green]")
+        
+        # Start a local web server if requested
+        if args.serve:
+            import http.server
+            import socketserver
+            import threading
+            import webbrowser
+            
+            web_path = self.config.get_web_path()
+            port = 8000
+            
+            self.console.print(f"\n[bold]Starting local web server on port {port}...[/bold]")
+            self.console.print(f"[bold blue]Open your browser at: http://localhost:{port}[/bold blue]")
+            self.console.print("Press Ctrl+C to stop the server.\n")
+            
+            # Change to the web directory
+            os.chdir(web_path)
+            
+            # Open browser after a short delay
+            threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
+            
+            # Start the server
+            Handler = http.server.SimpleHTTPRequestHandler
+            httpd = socketserver.TCPServer(("localhost", port), Handler)
+            
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                self.console.print("\n[bold]Web server stopped.[/bold]")
+            finally:
+                httpd.server_close()

@@ -1,0 +1,8 @@
+# Core dependencies
+pyyaml==6.0
+requests==2.28.2
+feedparser==6.0.10
+# sqlite3 is built into Python, no need to install separately
+
+# For testing
+pytest==7.3.1

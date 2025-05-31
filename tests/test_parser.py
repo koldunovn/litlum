@@ -1,8 +1,9 @@
-"""Tests for the RSS feed parser."""
+"""Tests for the CrossRef API parser."""
 
 import unittest
 import inspect
 from unittest.mock import patch, MagicMock
+from urllib.parse import quote
 import os
 import sys
 from pathlib import Path
@@ -14,278 +15,208 @@ from publication_reader.feeds.parser import FeedParser
 
 
 class TestFeedParser(unittest.TestCase):
-    """Test cases for the FeedParser class."""
+    """Test cases for the FeedParser class with CrossRef API."""
 
     def setUp(self):
         """Set up test environment."""
         self.parser = FeedParser()
         
-        # Create a ContentItem class that supports both attribute and dictionary access
-        class ContentItem(dict):
-            def __init__(self, value, type):
-                self.value = value
-                self.type = type
-                self['value'] = value
-                self['type'] = type
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
+        # Sample CrossRef API response item
+        self.crossref_item = {
+            'DOI': '10.1029/2024jc021997',
+            'title': ['Asymmetric Response of the North Atlantic Gyres to the North Atlantic Oscillation'],
+            'abstract': '<jats:title>Abstract</jats:title><jats:p>The North Atlantic Oscillation (NAO) is a leading mode of atmospheric variability, affecting the North Atlantic Ocean circulation through changes in wind stress and buoyancy forcing.</jats:p>',
+            'published': {
+                'date-parts': [[2025, 5, 30]]
+            }
+        }
         
-        # Define content items for reuse in tests
-        self.html_content_with_abstract_section = ContentItem(
-            value="""
-            <div>
-                <section class="abstract">
-                    <p>This is the abstract from the HTML content section.</p>
-                </section>
-            </div>
-            """,
-            type="text/html"
-        )
+        # Sample feed configuration
+        self.feed_config = {
+            'name': 'JGR Oceans',
+            'type': 'crossref',
+            'issn': '2169-9291'
+            # No days_range specified - should use global default
+        }
+
+    def test_extract_pub_date_full(self):
+        """Test extracting publication date with year, month, and day."""
+        item = {
+            'published': {
+                'date-parts': [[2025, 5, 30]]
+            }
+        }
+        expected = "2025-05-30T00:00:00"
+        self.assertEqual(self.parser._extract_pub_date(item), expected)
+
+    def test_extract_pub_date_year_month(self):
+        """Test extracting publication date with only year and month."""
+        item = {
+            'published': {
+                'date-parts': [[2025, 5]]
+            }
+        }
+        expected = "2025-05-01T00:00:00"
+        self.assertEqual(self.parser._extract_pub_date(item), expected)
+
+    def test_extract_pub_date_year_only(self):
+        """Test extracting publication date with only year."""
+        item = {
+            'published': {
+                'date-parts': [[2025]]
+            }
+        }
+        expected = "2025-01-01T00:00:00"
+        self.assertEqual(self.parser._extract_pub_date(item), expected)
+
+    def test_extract_pub_date_missing(self):
+        """Test extracting publication date when missing or invalid."""
+        # Should return current time if date is missing
+        item = {}
+        result = self.parser._extract_pub_date(item)
+        # Just check that it returns an ISO formatted string
+        self.assertIsInstance(result, str)
+        self.assertTrue('T' in result)  # ISO format has T between date and time
+
+    def test_extract_publication_data(self):
+        """Test extracting publication data from CrossRef item."""
+        result = self.parser._extract_publication_data(self.crossref_item, 'JGR Oceans')
         
-        self.html_content_with_abstract_heading = ContentItem(
-            value="""
-            <div>
-                <h2>Abstract</h2>
-                <p>This is the abstract following the Abstract heading.</p>
-            </div>
-            """,
-            type="text/html"
-        )
+        self.assertEqual(result['title'], 'Asymmetric Response of the North Atlantic Gyres to the North Atlantic Oscillation')
+        self.assertEqual(result['journal'], 'JGR Oceans')
+        self.assertEqual(result['doi'], '10.1029/2024jc021997')
+        self.assertEqual(result['url'], 'https://doi.org/10.1029/2024jc021997')
+        self.assertTrue('abstract' in result)
+        self.assertTrue('pub_date' in result)
+        self.assertEqual(result['guid'], 'crossref-10.1029/2024jc021997')
+
+    @patch('requests.get')
+    @patch('publication_reader.feeds.parser.Config')
+    def test_parse_feed(self, mock_config, mock_get):
+        """Test parsing CrossRef feed."""
+        # Mock config to return a global days_range of 10
+        mock_config_instance = MagicMock()
+        mock_config_instance._load_config.return_value = {
+            'crossref': {
+                'days_range': 10
+            }
+        }
+        mock_config.return_value = mock_config_instance
         
-        self.html_content_with_paragraphs = ContentItem(
-            value="""
-            <div>
-                <p>Journal metadata that should be skipped.</p>
-                <p>This is a substantial paragraph that should be used as the abstract because it has more than 100 characters and doesn't contain metadata terms like Volume and Issue.</p>
-            </div>
-            """,
-            type="text/html"
-        )
-
-    def test_clean_html(self):
-        """Test HTML cleaning function."""
-        html = "<p>This is a <strong>test</strong> paragraph.</p>"
-        expected = "This is a test paragraph."
-        self.assertEqual(FeedParser._clean_html(html), expected)
-
-    def test_extract_abstract_from_summary(self):
-        """Test extracting abstract from summary field."""
-        # Create an entry object with attribute and dictionary-style access like feedparser
-        class MockEntry(dict):
-            def __init__(self):
-                super().__init__()
-                # Make sure summary meets the minimum length requirement (>50 chars)
-                self.summary = "<p>This is the abstract from summary field with more than fifty characters to pass the length check in the parser code.</p>"
-                self['summary'] = self.summary
-                # Important: explicitly set link to a non-Wiley URL
-                # to ensure the summary logic path is used
-                self.link = "https://example.com/article/123"
-                self['link'] = self.link
-                # Ensure no dc_description that might take precedence
-                if hasattr(self, 'dc_description'):
-                    delattr(self, 'dc_description')
-                # Ensure no content that might take precedence
-                self.content = []
-                self['content'] = self.content
-                # Make sure this entry is not treated as Wiley journal metadata
-                self.description = "Regular description, not a journal issue"
-                self['description'] = self.description
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
-        abstract = self.parser._extract_abstract(entry)
-        self.assertIn("This is the abstract from summary field", abstract)
-
-    def test_extract_abstract_from_content(self):
-        """Test extracting abstract from content field."""
-        # Create a ContentItem instance with both attribute and dictionary access
-        class ContentItem(dict):
-            def __init__(self, value, type):
-                self.value = value
-                self.type = type
-                self['value'] = value
-                self['type'] = type
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        content_item = ContentItem(
-            value="<p>This is the abstract from content field with more than fifty characters to pass the length check in the parser code.</p>",
-            type="text/html"
-        )
-                
-        # Create an entry with attribute and dictionary-style access
-        class MockEntry(dict):
-            def __init__(self):
-                self.content = [content_item]
-                self['content'] = self.content
-                # Add a non-Wiley link to ensure we use the content field path
-                self.link = "https://example.com/article"
-                self['link'] = self.link
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
-        abstract = self.parser._extract_abstract(entry)
-        self.assertIn("This is the abstract from content field", abstract)
-
-    def test_extract_abstract_from_description(self):
-        """Test extracting abstract from description field."""
-        class MockEntry(dict):
-            def __init__(self):
-                self.description = "<p>This is the abstract from description field.</p>"
-                self['description'] = self.description
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
-        expected = "This is the abstract from description field."
-        self.assertEqual(self.parser._extract_abstract(entry), expected)
-
-    def test_wiley_journal_detection(self):
-        """Test detecting Wiley journal entries."""
-        # Create a Wiley journal entry with journal metadata in description
-        class MockEntry(dict):
-            def __init__(self):
-                self.link = "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021997"
-                self.description = "Journal of Geophysical Research: Oceans, Volume 130, Issue 6, June 2025"
-                self['link'] = self.link
-                self['description'] = self.description
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
+        # Create a mock response for the requests.get call
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'message': {
+                'items': [self.crossref_item]
+            }
+        }
+        mock_get.return_value = mock_response
         
-        # For Wiley journals with metadata-only descriptions, the parser should use a placeholder
-        # rather than the description which is just journal metadata
-        abstract = self.parser._extract_abstract(entry)
-        self.assertIn("Abstract not available", abstract)
-        self.assertNotEqual(abstract, entry.description)
-
-    def test_wiley_journal_html_content_parsing(self):
-        """Test parsing HTML content in Wiley journal entries."""
-        # Store reference to self in local variable for use in MockEntry.__init__
-        self_obj = self
+        # Reset and re-initialize the parser to use our mocked config
+        self.parser = FeedParser()
         
-        # Create a mock Wiley journal entry with HTML content
-        class MockEntry(dict):
-            def __init__(self):
-                self.content = [self_obj.html_content_with_abstract_section]
-                self['content'] = self.content
-                self.link = "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021997"
-                self['link'] = self.link
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
+        # Call the parse_feed method
+        result = self.parser.parse_feed(self.feed_config)
         
-        entry = MockEntry()
-        abstract = self.parser._extract_abstract(entry)
-        self.assertIn("This is the abstract from the HTML content section", abstract)
+        # Verify the results
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['title'], 'Asymmetric Response of the North Atlantic Gyres to the North Atlantic Oscillation')
+        self.assertEqual(result[0]['journal'], 'JGR Oceans')
+        self.assertEqual(result[0]['url'], 'https://doi.org/10.1029/2024jc021997')
 
-    def test_wiley_journal_abstract_heading(self):
-        """Test finding abstract after heading in Wiley journal entries."""
-        # Store reference to self in local variable for use in MockEntry.__init__
-        self_obj = self
-                
-        # Create a mock Wiley journal entry with HTML content containing h2 Abstract
-        class MockEntry(dict):
-            def __init__(self):
-                self.content = [self_obj.html_content_with_abstract_heading]
-                self['content'] = self.content
-                self.link = "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021997"
-                self['link'] = self.link
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
-        abstract = self.parser._extract_abstract(entry)
-        self.assertIn("This is the abstract following the Abstract heading", abstract)
+    @patch('requests.get')
+    def test_parse_feed_error(self, mock_get):
+        """Test error handling in parse_feed method."""
+        # Create a mock response that raises an exception
+        mock_get.side_effect = Exception("API error")
+        
+        # Call the parse_feed method
+        result = self.parser.parse_feed(self.feed_config)
+        
+        # Verify the results
+        self.assertEqual(result, [])
 
-    def test_wiley_journal_paragraph_content(self):
-        """Test finding paragraph content in Wiley journal entries."""
-        # Store reference to self in local variable for use in MockEntry.__init__
-        self_obj = self
-                
-        # Create a mock Wiley journal entry with HTML containing paragraphs
-        class MockEntry(dict):
-            def __init__(self):
-                self.content = [self_obj.html_content_with_paragraphs]
-                self['content'] = self.content
-                self.link = "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021997"
-                self['link'] = self.link
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
-        # The parser actually returns all paragraphs, so we need to adjust our expectation
-        abstract = self.parser._extract_abstract(entry)
-        self.assertIn("This is a substantial paragraph", abstract)
-        self.assertIn("more than 100 characters", abstract)
+    def test_missing_issn(self):
+        """Test handling of missing ISSN in feed configuration."""
+        # Create a feed config with missing ISSN
+        feed_config = {
+            'name': 'JGR Oceans',
+            'type': 'crossref'
+            # No ISSN provided
+        }
+        
+        # Call the parse_feed method
+        result = self.parser.parse_feed(feed_config)
+        
+        # Verify the results
+        self.assertEqual(result, [])
 
-    def test_dc_description_priority(self):
-        """Test that dc_description is prioritized for Wiley journals."""
-        # Check if the parser's _extract_abstract method has a reference to dc_description
-        parser_code = inspect.getsource(self.parser._extract_abstract)
-        if "dc_description" not in parser_code:
-            self.skipTest("Parser does not check for dc_description field")
-            
-        class MockEntry(dict):
-            def __init__(self):
-                self.link = "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021997"
-                self.description = "Journal of Geophysical Research: Oceans, Volume 130, Issue 6, June 2025"
-                self.dc_description = "This is the abstract from dc_description field."
-                self['link'] = self.link
-                self['description'] = self.description
-                self['dc_description'] = self.dc_description
-                
-            def get(self, key, default=None):
-                return getattr(self, key, default) if hasattr(self, key) else default
-                
-            def __contains__(self, key):
-                return hasattr(self, key)
-                
-        entry = MockEntry()
-        # Check if it matches the expected, or if it uses another fallback mechanism
-        abstract = self.parser._extract_abstract(entry)
-        self.assertNotEqual(abstract, "[Abstract not available in RSS feed. Please visit the article URL for full abstract.]")
-        # If dc_description is implemented, it should be prioritized
-        if "dc_description" in parser_code:
-            self.assertEqual(abstract, "This is the abstract from dc_description field.")
+    def test_non_research_title_filtering(self):
+        """Test filtering of non-research content based on title."""
+        # Create a CrossRef item with a non-research title
+        item = {
+            'DOI': '10.1029/2024jc021998',
+            'title': ['Issue Information: Table of Contents'],
+            'abstract': 'Some abstract content',
+            'published': {
+                'date-parts': [[2025, 5, 30]]
+            }
+        }
+        
+        # Extract publication data
+        result = self.parser._extract_publication_data(item, 'JGR Oceans')
+        
+        # Should be filtered out
+        self.assertIsNone(result)
+        
+    @patch('requests.get')
+    @patch('datetime.datetime')
+    @patch('publication_reader.feeds.parser.Config')
+    def test_custom_days_range(self, mock_config, mock_datetime, mock_get):
+        """Test that days_range parameter is used correctly."""
+        # Mock config to return a global days_range of 10
+        mock_config_instance = MagicMock()
+        mock_config_instance._load_config.return_value = {
+            'crossref': {
+                'days_range': 10
+            }
+        }
+        mock_config.return_value = mock_config_instance
+        
+        # Mock the current date to a fixed value
+        mock_now = MagicMock()
+        mock_now.strftime.return_value = "2025-05-31"
+        mock_datetime.now.return_value = mock_now
+        
+        # Create a mock response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'message': {
+                'items': [self.crossref_item]
+            }
+        }
+        mock_get.return_value = mock_response
+        
+        # Create a feed config with custom days_range that overrides global setting
+        custom_feed_config = {
+            'name': 'JGR Oceans',
+            'type': 'crossref',
+            'issn': '2169-9291',
+            'days_range': 7  # 7 days instead of global default 10
+        }
+        
+        # Reset and re-initialize the parser to use our mocked config
+        self.parser = FeedParser()
+        
+        # Call the parse_feed method
+        self.parser.parse_feed(custom_feed_config)
+        
+        # Verify the URL used in the request contains the correct date range
+        called_url = mock_get.call_args[0][0]
+        # The from-pub-date should be 7 days back from 2025-05-31
+        # Since the URL parameters are encoded, we need to check the encoded value
+        encoded_param = quote('from-pub-date:2025-05-24')
+        self.assertIn(encoded_param, called_url)
 
 
 if __name__ == "__main__":

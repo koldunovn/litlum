@@ -7,38 +7,80 @@ from typing import Dict, List, Optional, Any
 
 CONFIG_PATH = Path.home() / ".config" / "publication_reader" / "config.yaml"
 DEFAULT_CONFIG = {
+    "crossref": {
+        "days_range": 10  # Default number of days to look back for all journals
+    },
     "feeds": [
-        # {
-        #     "name": "Nature",
-        #     "url": "https://www.nature.com/nature.rss",
-        #     "type": "rss"
-        # },
-        # {
-        #     "name": "Science",
-        #     "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
-        #     "type": "rss"
-        # },
-        # {
-        #     "name": "PNAS",
-        #     "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss",
-        #     "type": "rss"
-        # },
         {
         "name": "JGR Oceans",
-        "type": "rss",
-        "url": "https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=21699291&type=etoc&feed=rss"},
-        {
-        "name": "JAMES",
-        "type": "rss",
-        "url": "https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=19422466&type=etoc&feed=rss"},
-               {
-        "name": "Earth's Future",
-        "type": "rss",
-        "url": "https://onlinelibrary.wiley.com/action/showFeed?jc=23284277&type=etoc&feed=rss"},
+        "type": "crossref",
+        "issn": "2169-9291"
+        # Removed specific days_range to use global default
+        },
         {
         "name": "Ocean Science",
-        "type": "rss",
-        "url": "https://os.copernicus.org/articles/xml/rss2_0.xml"}
+        "type": "crossref",
+        "issn": "1812-0792"
+        # Removed specific days_range to use global default
+        },
+        {
+        "name": "BAMS",
+        "type": "crossref",
+        "issn": "1520-0477"
+        },
+        {
+        "name": "GMD",
+        "type": "crossref",
+        "issn": "1991-9603"
+        },
+        {
+        "name": "GRL",
+        "type": "crossref",
+        "issn": "1944-8007"
+        },
+        {
+        "name": "JAMES",
+        "type": "crossref",
+        "issn": "1942-2466"
+        },
+        {
+        "name": "JGR Atmospheres",
+        "type": "crossref",
+        "issn": "2169-8996"
+        },
+        {
+        "name": "Journal of Climate",
+        "type": "crossref",
+        "issn": "1520-0442"
+        },
+        {
+        "name": "JPO",
+        "type": "crossref",
+        "issn": "1520-0485"
+        },
+        {
+        "name": "Monthly Weather Review",
+        "type": "crossref",
+        "issn": "1520-0493"
+        },
+        {
+        "name": "Nature Climate Change",
+        "type": "crossref",
+        "issn": "1758-6798"
+        },
+        {
+        "name": "Nature Geoscience",
+        "type": "crossref",
+        "issn": "1752-0908"
+        }
+        # Add more CrossRef journals as needed
+        # {
+        #   "name": "Journal Name",
+        #   "type": "crossref",
+        #   "issn": "XXXX-XXXX",
+        #   "days_range": 7  # Optional: override global days_range for this journal
+        # }
+        
     ],
     "database": {
         "path": "~/.local/share/publication_reader/publications.db"
@@ -62,6 +104,10 @@ DEFAULT_CONFIG = {
     "reports": {
         "path": "~/.local/share/publication_reader/reports",
         "min_relevance": 5
+    },
+    "web": {
+        "path": "~/.local/share/publication_reader/web",
+        "title": "Publication Reader"
     }
 }
 
@@ -145,6 +191,17 @@ class Config:
             Minimum relevance score (0-10)
         """
         return self.config.get('reports', {}).get('min_relevance', 7)
+    
+    def get_web_path(self) -> str:
+        """Get the path for the static website.
+        
+        Returns:
+            Web path
+        """
+        path = self.config.get('web', {}).get('path', DEFAULT_CONFIG['web']['path'])
+        web_path = os.path.expanduser(path)
+        os.makedirs(web_path, exist_ok=True)
+        return web_path
     
     def save(self) -> None:
         """Save current configuration to file."""
