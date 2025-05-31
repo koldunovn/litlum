@@ -40,7 +40,7 @@ class OllamaAnalyzer:
             return 0, "Insufficient data for analysis"
         
         # Get relevance score
-        relevance_score, relevance_text = self._analyze_relevance(title, abstract)
+        relevance_score, relevance_text = self._determine_relevance(title, abstract)
         
         # Always generate a summary, but with different detail level based on relevance
         if relevance_score >= 7:  # Highly relevant
@@ -52,8 +52,8 @@ class OllamaAnalyzer:
         
         return relevance_score, summary
     
-    def _analyze_relevance(self, title: str, abstract: str) -> Tuple[int, str]:
-        """Determine the relevance of a publication.
+    def _determine_relevance(self, title: str, abstract: str) -> Tuple[int, str]:
+        """Determine the relevance of a publication to the user's interests.
         
         Args:
             title: Publication title
@@ -63,7 +63,17 @@ class OllamaAnalyzer:
             Tuple of (relevance_score, explanation)
         """
         try:
+            # Define the analysis prompt - this already includes interests from config file
             prompt = self._create_relevance_prompt(title, abstract)
+            
+            # Print prompt for debugging with nice formatting
+            print("\n" + "="*80)
+            print(f"[DEBUG] PROMPT SENT TO LLM:")
+            print("-"*80)
+            print(f"{prompt}")
+            print("="*80)
+            
+            # Call the LLM
             response = ollama.chat(
                 model=self.model, 
                 messages=[
@@ -77,12 +87,55 @@ class OllamaAnalyzer:
             # Extract the response text
             response_text = response['message']['content']
             
-            # Extract relevance score (assuming format like "Relevance: 7/10")
-            score = self._extract_relevance_score(response_text)
+            # Print response for debugging with nice formatting
+            print("\n" + "="*80)
+            print(f"[DEBUG] LLM RESPONSE:")
+            print("-"*80)
+            print(f"{response_text}")
+            print("="*80)
             
-            return score, response_text
+            # Try multiple patterns to extract relevance score (models format scores differently)
+            # First try the standard N/10 format
+            relevance_match = re.search(r'\b([0-9]|10)\s*\/\s*10\b', response_text)
+            
+            # If that fails, try other common formats
+            if not relevance_match:
+                # Try formats like "Relevance: 7" or "Score: 7" or "Rating: 7"
+                relevance_match = re.search(r'(?:relevance|score|rating)\s*(?:is|:)\s*([0-9]|10)\b', 
+                                          response_text, re.IGNORECASE)
+            
+            # Try a simple number after the word "score" or similar
+            if not relevance_match:
+                relevance_match = re.search(r'(?:score|rating|relevance).*?([0-9]|10)\b', 
+                                          response_text, re.IGNORECASE)
+                
+            # Last resort - just find any number between 0-10 
+            if not relevance_match:
+                relevance_match = re.search(r'\b([0-9]|10)\b', response_text)
+            
+            # Print relevance match details with nice formatting
+            if relevance_match:
+                print(f"\n[DEBUG] RELEVANCE MATCH: Score {relevance_match.group(1)}/10")
+                print(f"        Pattern matched: '{relevance_match.group(0)}'")
+                print(f"        Match position: characters {relevance_match.span()[0]}-{relevance_match.span()[1]}")
+            else:
+                print("\n[DEBUG] NO RELEVANCE MATCH FOUND - defaulting to 0/10")
+            
+            # Use the first captured group as the relevance score
+            relevance_score = int(relevance_match.group(1)) if relevance_match else 0
+            
+            # Extract the explanation
+            explanation_match = re.search(r'(?:explanation|because|as)[:.]?\s*(.+)', 
+                                        response_text, re.IGNORECASE | re.DOTALL)
+            explanation = explanation_match.group(1).strip() if explanation_match else ""
+            
+            print(f"\n[DEBUG] FINAL RELEVANCE SCORE: {relevance_score}/10")
+            print("-"*80)
+            
+            return relevance_score, explanation
+        
         except Exception as e:
-            print(f"Error analyzing relevance: {str(e)}")
+            print(f"Error determining relevance: {str(e)}")
             return 0, f"Error analyzing relevance: {str(e)}"
     
     def _generate_summary(self, title: str, abstract: str, journal: str = '', relevance_score: int = 0, 
@@ -101,22 +154,14 @@ class OllamaAnalyzer:
             Formatted summary text with markdown formatting
         """
         try:
-            # Create a more comprehensive prompt that incorporates the relevance information
-            if detailed:
-                prompt = f"{self.summary_prompt}\n\n"
-                prompt += f"Journal: {journal}\n"
-                prompt += f"Title: {title}\n"
-                prompt += f"Abstract: {abstract}\n\n"
-                prompt += f"This publication has been rated {relevance_score}/10 for relevance.\n"
-                prompt += f"Structure your response in markdown format with the following sections:\n"
-                prompt += f"1. ## Summary - A concise summary of key findings and methodology\n"
-                prompt += f"2. ## Relevance - Why this publication is relevant to our interests\n"
-                prompt += f"Keep each section brief but informative."
-            else:
-                # Simpler prompt for less relevant publications
-                prompt = f"Briefly summarize the following publication and explain why it received a relevance score of {relevance_score}/10.\n\n"
-                prompt += f"Title: {title}\n"
-                prompt += f"Abstract: {abstract}\n"
+            # Create a prompt that enforces very concise output (1-2 sentences)
+            prompt = f"{self.summary_prompt}\n\n"
+            prompt += f"Journal: {journal}\n"
+            prompt += f"Title: {title}\n"
+            prompt += f"Abstract: {abstract}\n\n"
+            prompt += f"This publication has been rated {relevance_score}/10 for relevance.\n\n"
+            prompt += f"IMPORTANT: Be EXTREMELY concise. Limit your entire response to 1-2 sentences total.\n"
+            prompt += f"Just provide a single concise statement about what the paper does and why it's relevant to our interests.\n"
             
             response = ollama.chat(
                 model=self.model, 
@@ -128,20 +173,23 @@ class OllamaAnalyzer:
                 ]
             )
             
-            summary_text = response['message']['content']
+            # Get the raw summary and ensure it's brief
+            summary_text = response['message']['content'].strip()
             
-            # Format the response with markdown headers if they don't exist
-            if detailed and "##" not in summary_text:
-                parts = summary_text.split('\n\n', 1)
-                if len(parts) > 1:
-                    summary_text = f"## Summary\n\n{parts[0]}\n\n## Relevance\n\n{parts[1]}"
-                else:
-                    summary_text = f"## Analysis\n\n{summary_text}"
+            # If it's extremely long, truncate and add ellipsis
+            max_length = 500  # Characters - allows for 2-3 meaningful sentences
+            if len(summary_text) > max_length:
+                # Try to find a sentence boundary to truncate at
+                last_period = summary_text[:max_length].rfind('.')
+                if last_period > max_length * 0.7:  # If we have a decent amount of text before truncating
+                    summary_text = summary_text[:last_period+1]
+                else:  # Otherwise just truncate at max_length
+                    summary_text = summary_text[:max_length] + "..."
             
             return summary_text
         except Exception as e:
             print(f"Error generating summary: {str(e)}")
-            return f"## Error\n\nError generating summary: {str(e)}"
+            return f"Error generating summary: {str(e)}"
     
     def _create_relevance_prompt(self, title: str, abstract: str) -> str:
         """Create a prompt for relevance analysis.
