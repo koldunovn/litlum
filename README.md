@@ -8,6 +8,7 @@ A scientific publication monitoring and analysis application that tracks RSS fee
 - **LLM Integration**: Use Ollama to analyze publication relevance and generate summaries
 - **SQLite Database**: Store publications, analysis results, and daily reports
 - **Rich CLI Interface**: User-friendly terminal interface with formatted output
+- **Static Web Interface**: Browse reports and publications through a clean, modern web UI
 - **Scheduled Execution**: Can be run via cron job for automated monitoring
 - **Customizable**: Configure RSS feeds, LLM prompts, and more via configuration file
 
@@ -74,6 +75,9 @@ python -m publication_reader report --generate
 
 # Run the full pipeline (fetch, analyze, report)
 python -m publication_reader run
+
+# Run the full pipeline (fetch, analyze, report) and serve the web interface
+python -m publication_reader run --serve
 ```
 
 ### Additional Commands
@@ -111,39 +115,6 @@ To view detailed information about a specific publication, including its abstrac
 python -m publication_reader show 5
 ```
 
-Example output:
-
-```
-╭──────────────────────────────────────────────────────────────────────────────╮
-│                                                                              │
-│   Seasonal and Interannual Variability of the Aragonite Saturation Horizon   │
-│                in the California Current System of Baja California           │
-│                                                                              │
-│  ID: 5 | Date: 2025-05-28 | Journal: JGR Oceans | Relevance: 4/10           │
-│  URL: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2024JC021884      │
-│                                                                              │
-│  Abstract:                                                                   │
-│  This study investigated the factors influencing the seasonal and            │
-│  interannual variability of the aragonite saturation horizon (ASH) in the    │
-│  California Current System off Baja California. We used hydrographic data    │
-│  collected from 2004 to 2022 to construct regression models between ASH      │
-│  depth and variables such as dissolved inorganic carbon, sea surface         │
-│  temperature, salinity, dissolved oxygen, and atmospheric CO2                │
-│  concentrations. We found that sea surface temperature and atmospheric CO2   │
-│  explain most of the ASH variability on seasonal and interannual scales.     │
-│  Our results show a shoaling ASH trend of ‐1.14±0.49 m yr‐1, confirming     │
-│  that ocean acidification is affecting the region.                           │
-│                                                                              │
-│  LLM Analysis:                                                               │
-│  Relevance Score: 4/10                                                       │
-│  Explanation: This study focuses on ocean acidification in the California    │
-│  Current System rather than the Arctic or Southern Ocean. While it does      │
-│  relate to climate change impacts on marine environments, it doesn't         │
-│  specifically address the interests of Arctic ocean, sea ice, or climate     │
-│  modeling in polar regions.                                                  │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-```
 
 #### Filtering Publications by Date and Relevance
 
@@ -153,8 +124,6 @@ Filter publications by date range and minimum relevance score:
 # List publications from the last 14 days with relevance score of at least 6
 python -m publication_reader list --publications --days 14 --min-relevance 6
 
-# List publications from a specific date range
-python -m publication_reader list --publications --from-date 2025-05-01 --to-date 2025-05-31 --min-relevance 5
 ```
 
 #### Reanalyzing Publications
@@ -168,12 +137,6 @@ python -m publication_reader analyze --reanalyze
 # Reanalyze publications from a specific date
 python -m publication_reader analyze --date 2025-05-30 --reanalyze
 
-# To reanalyze specific publications, you'll need to reset and selectively fetch
-# For example, to reanalyze only certain journals, you would modify your config.yaml
-# temporarily to include only those feeds, then run:
-python -m publication_reader reset --force
-python -m publication_reader fetch
-python -m publication_reader analyze
 ```
 
 #### Working with Reports
@@ -218,42 +181,38 @@ The default configuration file is created at `~/.config/publication_reader/confi
 Example configuration:
 
 ```yaml
-feeds:
-  - name: JGR Oceans
-    url: https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=21699291&type=etoc&feed=rss
-    type: rss
-  - name: Ocean Science
-    url: https://os.copernicus.org/rss.xml
-    type: rss
-  - name: Earth's Future
-    url: https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=23284277&type=etoc&feed=rss
-    type: rss
-
-# Separate interests section for better organization and flexibility
-interests:
-  - Arctic ocean
-  - climate modelling
-  - high resolution modelling
-  - sea ice
-  - Southern Ocean
-  - climate change
-
+crossref:
+  days_range: 10
 database:
   path: ~/.local/share/publication_reader/publications.db
+feeds:
+- issn: 2169-9291
+  name: JGR Oceans
+  type: crossref
+- issn: 1812-0792
+  name: Ocean Science
+  type: crossref
 
+interests:
+- Arctic ocean
+- climate modelling
+- high resolution modelling
+- sea ice
+- Southern Ocean
+- climate change
 ollama:
-  model: llama3.2  # Using a specific model version
   host: http://localhost:11434
-  relevance_prompt: >
-    Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}.
-    Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences).
-  summary_prompt: >
-    Create a concise summary of this scientific publication highlighting key findings and methodology.
-    Keep the summary to 1-2 sentences. Include relevance to these interests: {interests}.
-
+  model: llama3.2
+  relevance_prompt: 'Analyze this scientific publication and determine if it''s relevant
+    based on the following interests: {interests}. Rate relevance from 0-10 and explain
+    why. Keep your explanation brief (1-2 sentences).'
+  summary_prompt: 'Create a very concise summary (1-2 sentences) of this scientific
+    publication highlighting key findings and briefly explain its relevance to the
+    following interests: {interests}.'
 reports:
+  min_relevance: 5
   path: ~/.local/share/publication_reader/reports
-  min_relevance: 6  # Only include publications with relevance score ≥ 6
+
 ```
 
 ## Setting Up a Cron Job
@@ -284,15 +243,42 @@ chmod +x ~/scripts/run_publication_reader.sh
 0 8 * * * ~/scripts/run_publication_reader.sh
 ```
 
+## Web Interface
+
+The publication reader now includes a static web interface that makes it easy to browse reports and publications:
+
+### Features
+
+- **Index Page**: Lists all available reports by date
+- **Report Pages**: Displays publications above the relevance threshold
+- **Interactive Tables**: Each publication includes:
+  - Title and journal information
+  - Relevance score
+  - Link to the original paper (via DOI/URL)
+  - Expandable sections for AI assessment and abstract
+- **Responsive Design**: Works on desktop and mobile devices
+
+### Using the Web Interface
+
+```bash
+# Generate the static website
+python -m publication_reader web
+
+# Generate and serve the website locally
+python -m publication_reader web --serve
+```
+
+The web interface will be generated in the configured web path (default: `~/.local/share/publication_reader/web`).
+
 ## Future Development
 
 This application is designed with future extensibility in mind:
 
-- Web interface development
 - More sophisticated relevance analysis
 - Additional publication sources
 - Email notifications
 - Custom user interests configuration
+- Enhanced web interface with search and filtering
 
 ## License
 

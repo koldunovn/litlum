@@ -104,6 +104,10 @@ DEFAULT_CONFIG = {
     "reports": {
         "path": "~/.local/share/publication_reader/reports",
         "min_relevance": 5
+    },
+    "web": {
+        "path": "~/.local/share/publication_reader/web",
+        "title": "Publication Reader"
     }
 }
 
@@ -187,6 +191,17 @@ class Config:
             Minimum relevance score (0-10)
         """
         return self.config.get('reports', {}).get('min_relevance', 7)
+    
+    def get_web_path(self) -> str:
+        """Get the path for the static website.
+        
+        Returns:
+            Web path
+        """
+        path = self.config.get('web', {}).get('path', DEFAULT_CONFIG['web']['path'])
+        web_path = os.path.expanduser(path)
+        os.makedirs(web_path, exist_ok=True)
+        return web_path
     
     def save(self) -> None:
         """Save current configuration to file."""
