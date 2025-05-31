@@ -7,14 +7,14 @@ from typing import Dict, List, Any, Optional
 from urllib.parse import quote
 
 
-class FeedParser:
-    """Parser for scientific publications using CrossRef API."""
+class CrossRefParser:
+    """Parser for CrossRef API to fetch scientific publications."""
     
     def __init__(self):
-        """Initialize the feed parser."""
+        """Initialize the CrossRef parser."""
         self.base_url = "https://api.crossref.org/works"
         self.user_agent = "PublicationReader/1.0 (mailto:you@awi.de)"  # Replace with your email
-    
+        
     def parse_feed(self, feed_config: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Parse publications from CrossRef API based on ISSN.
         
@@ -82,17 +82,6 @@ class FeedParser:
         if not title:
             return None
         
-        # Filter out non-research content like issue information, tables of contents, etc.
-        non_research_keywords = [
-            'issue information', 'table of contents', 'cover image', 
-            'editorial board', 'masthead', 'editor', 'front matter',
-            'back matter', 'volume information', 'errata', 'correction'
-        ]
-        
-        # Check if the title contains any of the non-research keywords
-        if any(keyword.lower() in title.lower() for keyword in non_research_keywords):
-            return None
-        
         # Extract abstract
         abstract = ""
         if 'abstract' in item and item['abstract']:
@@ -140,8 +129,8 @@ class FeedParser:
                     elif len(date_parts) == 1:
                         year = date_parts[0]
                         return datetime(year, 1, 1).isoformat()
-        except Exception as e:
-            print(f"Error parsing date from CrossRef item: {str(e)}")
+        except Exception:
+            pass
         
         # Default to current time if no date found
         return datetime.now().isoformat()
