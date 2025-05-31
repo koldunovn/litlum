@@ -3,6 +3,7 @@
 import unittest
 import inspect
 from unittest.mock import patch, MagicMock
+from urllib.parse import quote
 import os
 import sys
 from pathlib import Path
@@ -34,7 +35,8 @@ class TestFeedParser(unittest.TestCase):
         self.feed_config = {
             'name': 'JGR Oceans',
             'type': 'crossref',
-            'issn': '2169-9291'
+            'issn': '2169-9291',
+            'days_range': 3
         }
 
     def test_extract_pub_date_full(self):
@@ -153,6 +155,42 @@ class TestFeedParser(unittest.TestCase):
         
         # Should be filtered out
         self.assertIsNone(result)
+        
+    @patch('requests.get')
+    @patch('datetime.datetime')
+    def test_custom_days_range(self, mock_datetime, mock_get):
+        """Test that days_range parameter is used correctly."""
+        # Mock the current date to a fixed value
+        mock_now = MagicMock()
+        mock_now.strftime.return_value = "2025-05-31"
+        mock_datetime.now.return_value = mock_now
+        
+        # Create a mock response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            'message': {
+                'items': [self.crossref_item]
+            }
+        }
+        mock_get.return_value = mock_response
+        
+        # Create a feed config with custom days_range
+        custom_feed_config = {
+            'name': 'JGR Oceans',
+            'type': 'crossref',
+            'issn': '2169-9291',
+            'days_range': 7  # 7 days instead of default 3
+        }
+        
+        # Call the parse_feed method
+        self.parser.parse_feed(custom_feed_config)
+        
+        # Verify the URL used in the request contains the correct date range
+        called_url = mock_get.call_args[0][0]
+        # The from-pub-date should be 7 days back from 2025-05-31
+        # Since the URL parameters are encoded, we need to check the encoded value
+        encoded_param = quote('from-pub-date:2025-05-24')
+        self.assertIn(encoded_param, called_url)
 
 
 if __name__ == "__main__":

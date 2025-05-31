@@ -11,18 +11,21 @@ DEFAULT_CONFIG = {
         {
         "name": "JGR Oceans",
         "type": "crossref",
-        "issn": "2169-9291"
+        "issn": "2169-9291",
+        "days_range": 3
         },
         {
         "name": "Ocean Science",
         "type": "crossref",
-        "issn": "1812-0792"
+        "issn": "1812-0792",
+        "days_range": 3
         }
         # Add more CrossRef journals as needed
         # {
         #   "name": "Journal Name",
         #   "type": "crossref",
-        #   "issn": "XXXX-XXXX"
+        #   "issn": "XXXX-XXXX",
+        #   "days_range": 3  # Number of days to look back for publications
         # }
         
     ],

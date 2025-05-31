@@ -32,8 +32,9 @@ class FeedParser:
             return []
         
         try:
-            # Get publications from the last 30 days by default
-            from_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+            # Get publications from the configured days range (default: 3 days)
+            days_range = feed_config.get('days_range', 3)
+            from_date = (datetime.now() - timedelta(days=days_range)).strftime("%Y-%m-%d")
             
             # Construct the API URL
             filter_params = f"issn:{issn},from-pub-date:{from_date},has-abstract:true"
