@@ -8,34 +8,60 @@ from typing import Dict, List, Optional, Any
 CONFIG_PATH = Path.home() / ".config" / "publication_reader" / "config.yaml"
 DEFAULT_CONFIG = {
     "feeds": [
+        # {
+        #     "name": "Nature",
+        #     "url": "https://www.nature.com/nature.rss",
+        #     "type": "rss"
+        # },
+        # {
+        #     "name": "Science",
+        #     "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+        #     "type": "rss"
+        # },
+        # {
+        #     "name": "PNAS",
+        #     "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss",
+        #     "type": "rss"
+        # },
         {
-            "name": "Nature",
-            "url": "https://www.nature.com/nature.rss",
-            "type": "rss"
-        },
+        "name": "JGR Oceans",
+        "type": "rss",
+        "url": "https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=21699291&type=etoc&feed=rss"},
         {
-            "name": "Science",
-            "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
-            "type": "rss"
-        },
+        "name": "JAMES",
+        "type": "rss",
+        "url": "https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=19422466&type=etoc&feed=rss"},
+               {
+        "name": "Earth's Future",
+        "type": "rss",
+        "url": "https://onlinelibrary.wiley.com/action/showFeed?jc=23284277&type=etoc&feed=rss"},
         {
-            "name": "PNAS",
-            "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss",
-            "type": "rss"
-        }
+        "name": "Ocean Science",
+        "type": "rss",
+        "url": "https://os.copernicus.org/articles/xml/rss2_0.xml"}
     ],
     "database": {
         "path": "~/.local/share/publication_reader/publications.db"
     },
+    "interests": [
+        "Arctic ocean", 
+        "climate modelling", 
+        "high resolution modelling", 
+        # "artificial intelligence", 
+        # "machine learning", 
+        "sea ice", 
+        "Southern Ocean", 
+        "climate change"
+    ],
     "ollama": {
         "model": "llama3.2",
         "host": "http://localhost:11434",
-        "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: Arctic ocean, climate modelling, high resolution modelling, artificial intelligence, machine learning, AI, ML, sea ice, Southern Ocean, climate change. Rate relevance from 0-10 and explain why.",
-        "summary_prompt": "Create a concise summary of this scientific publication highlighting key findings and methodology and explain its relevance to Arctic ocean, climate modelling, high resolution modelling, artificial intelligence, machine learning, sea ice, Southern Ocean, climate change research."
+        "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences).",
+        "summary_prompt": "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings and briefly explain its relevance to the following interests: {interests}."
     },
     "reports": {
         "path": "~/.local/share/publication_reader/reports",
-        "min_relevance": 7
+        "min_relevance": 5
     }
 }
 
@@ -72,9 +98,34 @@ class Config:
         path = self.config.get('database', {}).get('path', DEFAULT_CONFIG['database']['path'])
         return os.path.expanduser(path)
     
+    def get_interests(self) -> List[str]:
+        """Get the list of interests for determining publication relevance.
+        
+        Returns:
+            List of interest topics as strings
+        """
+        return self.config.get('interests', [])
+    
     def get_ollama_config(self) -> Dict[str, Any]:
-        """Get Ollama configuration."""
-        return self.config.get('ollama', DEFAULT_CONFIG['ollama'])
+        """Get Ollama LLM configuration with interests formatted into prompts.
+        
+        Returns:
+            Ollama configuration dictionary with formatted prompts
+        """
+        ollama_config = self.config.get('ollama', DEFAULT_CONFIG['ollama'])
+        
+        # Format the interests into the prompts
+        interests = self.get_interests()
+        interests_str = ", ".join(interests)
+        
+        # Replace the placeholder in the prompts
+        if 'relevance_prompt' in ollama_config:
+            ollama_config['relevance_prompt'] = ollama_config['relevance_prompt'].format(interests=interests_str)
+        
+        if 'summary_prompt' in ollama_config:
+            ollama_config['summary_prompt'] = ollama_config['summary_prompt'].format(interests=interests_str)
+        
+        return ollama_config
     
     def get_reports_path(self) -> str:
         """Get the path for storing reports.

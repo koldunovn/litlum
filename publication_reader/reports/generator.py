@@ -44,49 +44,32 @@ class ReportGenerator:
         # Sort publications by relevance score (highest first)
         relevant_publications.sort(key=lambda p: p.get('relevance_score', 0), reverse=True)
         
-        # Generate report summary
+        # Generate report summary - just a simple overview without detailed publication info
         if relevant_publications:
-            # Create a clean overview summary
-            overview = f"Found {len(relevant_publications)} publications with relevance score >= {self.min_relevance} for {date_str}."
+            summary = f"Found {len(relevant_publications)} publications with relevance score >= {self.min_relevance} for {date_str}."
             
-            # Create detailed publication summaries
-            detailed_summaries = []
-            for i, pub in enumerate(relevant_publications, 1):
-                title = pub.get('title', 'Untitled')
-                journal = pub.get('journal', '')
-                relevance = pub.get('relevance_score', 0)
-                pub_id = pub.get('id', '')
-                
-                # Format publication header
-                pub_header = f"### {i}. {title}"
-                pub_meta = f"**Journal:** {journal} | **Relevance:** {relevance}/10 | **ID:** {pub_id}"
-                
-                # Include the full LLM summary with proper formatting
-                llm_summary = ""
-                if pub.get('llm_summary'):
-                    # Clean up the LLM summary for markdown display
-                    raw_summary = pub.get('llm_summary', '')
-                    
-                    # Remove duplicate headers if our formatting already adds them
-                    if raw_summary.startswith('##'):
-                        llm_summary = raw_summary
-                    else:
-                        llm_summary = f"#### Analysis\n{raw_summary}"
-                
-                # Combine all elements of this publication's summary
-                detailed_summaries.append(f"{pub_header}\n{pub_meta}\n\n{llm_summary}")
+            # Add publication count by relevance band
+            high_relevance = len([p for p in relevant_publications if p.get('relevance_score', 0) >= 8])
+            medium_relevance = len([p for p in relevant_publications if 7 <= p.get('relevance_score', 0) < 8])
             
-            # Combine overview and detailed summaries
-            summary = f"{overview}\n\n" + "\n\n".join(detailed_summaries)
+            if high_relevance > 0:
+                summary += f"\n\n{high_relevance} publications have high relevance (8-10)."
+            if medium_relevance > 0:
+                summary += f"\n{medium_relevance} publications have medium relevance (7)."
+            
+            # Add top fields/journals if available
+            journals = {}
+            for pub in relevant_publications:
+                journal = pub.get('journal', 'Unknown')
+                journals[journal] = journals.get(journal, 0) + 1
+            
+            if journals:
+                top_journals = sorted(journals.items(), key=lambda x: x[1], reverse=True)[:3]
+                if top_journals:
+                    summary += "\n\nTop journals: " + ", ".join([f"{j} ({c})" for j, c in top_journals])
         else:
             summary = f"No publications with relevance score >= {self.min_relevance} found for {date_str}.\n\n" + \
                      f"Consider adjusting the minimum relevance threshold in config.yaml if needed."
-            
-            summary += "\n"
-        
-        # Add a note if there are many publications
-        if len(relevant_publications) > 5:
-            summary += f"\n\nPlus {len(relevant_publications) - 5} more relevant publications."
         
         # Create the report dictionary
         report = {
@@ -162,13 +145,7 @@ class ReportGenerator:
             expand=False
         ))
         
-        # Display summary as formatted markdown text
-        summary_text = report.get('summary', '')
-        if summary_text:
-            self.console.print("\n[bold]Report Summary:[/bold]")
-            self.console.print(Markdown(summary_text))
-        
-        # Display detailed publications table
+        # Display detailed publications table first
         table = Table(title=f"Relevant Publications ({report_date}, Relevance >= {self.min_relevance})")
         table.add_column("ID", style="dim", width=5)
         table.add_column("Journal", style="cyan", width=15)
@@ -177,11 +154,13 @@ class ReportGenerator:
         
         # Count relevant publications for display
         relevant_count = 0
+        relevant_pubs = []
         
         for pub in report.get('publications', []):
             relevance = pub.get('relevance_score', 0)
             if relevance >= self.min_relevance:  # Only show publications above threshold
                 relevant_count += 1
+                relevant_pubs.append(pub)
                 table.add_row(
                     str(pub.get('id', '')),
                     pub.get('journal', ''),
@@ -191,6 +170,41 @@ class ReportGenerator:
         
         if relevant_count > 0:
             self.console.print(table)
+            
+            # Create a consolidated summary of all relevant publications
+            self.console.print("\n[bold]Publication Summaries:[/bold]")
+            
+            # Create a consolidated markdown content with better formatting
+            consolidated_summary = "## Relevant Publications Summary\n\n"
+            
+            # Sort publications by relevance score (highest first)
+            sorted_pubs = sorted(relevant_pubs, key=lambda x: x.get('relevance_score', 0), reverse=True)
+            
+            for pub in sorted_pubs:
+                pub_id = pub.get('id', '')
+                title = pub.get('title', 'Untitled')
+                relevance = pub.get('relevance_score', 0)
+                url = pub.get('url', '')
+                summary = pub.get('llm_summary', 'No summary available.')
+                journal = pub.get('journal', '')
+                
+                # Add each publication's info to the consolidated summary with better formatting
+                consolidated_summary += f"### {title}\n\n"
+                consolidated_summary += f"**ID:** {pub_id} | **Journal:** {journal} | **Relevance:** {relevance}/10\n"
+                if url:
+                    consolidated_summary += f"**URL:** [{url}]({url})\n\n"
+                else:
+                    consolidated_summary += "\n\n"
+                consolidated_summary += f"{summary}\n\n"
+                consolidated_summary += "---\n\n"  # Add a separator between publications
+                
+            # Display the consolidated summary in a single panel
+            self.console.print(Panel(
+                Markdown(consolidated_summary),
+                expand=False,
+                padding=(1, 2)  # Add padding for better readability
+            ))
+            
             self.console.print(f"\n[bold]To view detailed information about a publication, use:[/bold]")
             self.console.print(f"python -m publication_reader show <ID>")
         else:
@@ -212,50 +226,66 @@ class ReportGenerator:
         return sorted(reports, reverse=True)
     
     def display_publication_details(self, publication: Dict[str, Any]) -> None:
-        """Display detailed information for a single publication.
+        """Display detailed information about a publication.
         
         Args:
             publication: Publication dictionary
         """
-        self.console.print("\n")
+        title = publication.get('title', 'Untitled')
+        journal = publication.get('journal', '')
+        pub_date = publication.get('pub_date', '')
+        authors = publication.get('authors', [])
+        abstract = publication.get('abstract', '')
+        relevance_score = publication.get('relevance_score', 0)
+        llm_summary = publication.get('llm_summary', '')
+        url = publication.get('url', '')
         
-        # Header with publication title and metadata
-        relevance = publication.get('relevance_score', 0)
-        relevance_color = "green" if relevance >= self.min_relevance else "yellow" if relevance >= 5 else "red"
+        # Set color based on relevance score
+        if relevance_score >= 8:
+            score_color = "green"
+        elif relevance_score >= self.min_relevance:
+            score_color = "yellow"
+        else:
+            score_color = "red"
+        
+        # Display warning if below threshold
+        if relevance_score < self.min_relevance:
+            self.console.print(f"[bold yellow]Warning: This publication has a relevance score of {relevance_score}/10, "
+                               f"which is below the minimum threshold of {self.min_relevance}.[/bold yellow]")
+        
+        # Header panel with basic information including URL
+        header_content = f"[bold]{title}[/bold]\n\n"
+        header_content += f"Journal: {journal}\n"
+        header_content += f"Date: {pub_date}\n"
+        header_content += f"Authors: {', '.join(authors)}\n"
+        header_content += f"Relevance: [{score_color}]{relevance_score}/10[/{score_color}]\n"
+        
+        if url:
+            header_content += f"URL: [link={url}]{url}[/link]"
         
         self.console.print(Panel(
-            f"[bold]{publication.get('title', 'Untitled')}[/bold]",
-            title=f"{publication.get('journal', '')} | Relevance: [{relevance_color}]{relevance}/10[/{relevance_color}] | Date: {publication.get('pub_date', '')[:10]}",
+            header_content,
+            title="Publication Details",
             expand=False
         ))
         
-        # Publication abstract
-        if publication.get('abstract'):
+        # Abstract panel
+        if abstract:
             self.console.print(Panel(
-                publication.get('abstract', ''),
+                abstract,
                 title="Abstract",
                 expand=False
             ))
         
-        # LLM analysis with better formatting
-        if publication.get('llm_summary'):
-            # Format the LLM summary with better markdown rendering
-            llm_analysis = publication.get('llm_summary', '')
-            
-            # Add section headers if they don't exist
-            if "## Summary" not in llm_analysis and "## Relevance" not in llm_analysis:
-                # Try to structure the analysis with headers
-                summary_parts = llm_analysis.split("\n\n", 1)
-                if len(summary_parts) > 1:
-                    llm_analysis = f"## Summary\n\n{summary_parts[0]}\n\n## Relevance\n\n{summary_parts[1]}"
-                else:
-                    llm_analysis = f"## Analysis\n\n{llm_analysis}"
-            
+        # LLM summary panel
+        if llm_summary:
             self.console.print(Panel(
-                Markdown(llm_analysis),
-                title=f"LLM Analysis (Relevance Score: {relevance}/10)",
+                llm_summary,
+                title="Concise Summary",
                 expand=False
             ))
+            
+
         
         # Links and additional information
         self.console.print("\n[bold]Additional Information:[/bold]")
@@ -266,6 +296,6 @@ class ReportGenerator:
         self.console.print(f"GUID: {publication.get('guid', 'Not available')}[:30]...")
         
         # Threshold information
-        if relevance < self.min_relevance:
-            self.console.print(f"\n[yellow]Note: This publication's relevance score ({relevance}) is below the current threshold ({self.min_relevance}).[/yellow]")
+        if relevance_score < self.min_relevance:
+            self.console.print(f"\n[yellow]Note: This publication's relevance score ({relevance_score}) is below the current threshold ({self.min_relevance}).[/yellow]")
             self.console.print(f"[yellow]It will not appear in reports unless you adjust the threshold in the configuration.[/yellow]")
