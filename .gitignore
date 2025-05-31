@@ -1,0 +1,37 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.local
+
+# Database files (if you don't want to track them)
+*.db
+*.sqlite
+*.sqlite3
+
+# Report files (if they're generated locally)
+# Uncomment if you don't want to track reports
+# reports/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
