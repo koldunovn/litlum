@@ -72,7 +72,57 @@ DEFAULT_CONFIG = {
         "name": "Nature Geoscience",
         "type": "crossref",
         "issn": "1752-0908"
-        }
+        },
+        {
+        "name": "Ocean Dynamics",
+        "type": "crossref",
+        "issn": "1616-7228"
+        },
+        {
+        "name": "Progress in Oceanography",
+        "type": "crossref",
+        "issn": "873-4472"
+        },
+        {
+        "name": "Reviews of Geophysics",
+        "type": "crossref",
+        "issn": "1944-9208"
+        },
+        {
+        "name": "Ocean Modelling",
+        "type": "crossref",
+        "issn": "1463-5011"
+        },
+        {
+        "name": "The Cryosphere",
+        "type": "crossref",
+        "issn": "1994-0424"
+        },
+        {
+        "name": "Communications Earth & Environment",
+        "type": "crossref",
+        "issn": "2662-4435"
+        },
+        {
+        "name": "Nature",
+        "type": "crossref",
+        "issn": "1476-4687"
+        },
+        {
+        "name": "Science",
+        "type": "crossref",
+        "issn": "1095-9203"
+        },
+        {
+        "name": "GGR: MLC",
+        "type": "crossref",
+        "issn": "2993-5210"
+        },
+        {
+        "name": "Oceanography",
+        "type": "crossref",
+        "issn": "2377-617X"
+        },
         # Add more CrossRef journals as needed
         # {
         #   "name": "Journal Name",
