@@ -22,6 +22,56 @@ DEFAULT_CONFIG = {
         "type": "crossref",
         "issn": "1812-0792"
         # Removed specific days_range to use global default
+        },
+        {
+        "name": "BAMS",
+        "type": "crossref",
+        "issn": "1520-0477"
+        },
+        {
+        "name": "GMD",
+        "type": "crossref",
+        "issn": "1991-9603"
+        },
+        {
+        "name": "GRL",
+        "type": "crossref",
+        "issn": "1944-8007"
+        },
+        {
+        "name": "JAMES",
+        "type": "crossref",
+        "issn": "1942-2466"
+        },
+        {
+        "name": "JGR Atmospheres",
+        "type": "crossref",
+        "issn": "2169-8996"
+        },
+        {
+        "name": "Journal of Climate",
+        "type": "crossref",
+        "issn": "1520-0442"
+        },
+        {
+        "name": "JPO",
+        "type": "crossref",
+        "issn": "1520-0485"
+        },
+        {
+        "name": "Monthly Weather Review",
+        "type": "crossref",
+        "issn": "1520-0493"
+        },
+        {
+        "name": "Nature Climate Change",
+        "type": "crossref",
+        "issn": "1758-6798"
+        },
+        {
+        "name": "Nature Geoscience",
+        "type": "crossref",
+        "issn": "1752-0908"
         }
         # Add more CrossRef journals as needed
         # {
