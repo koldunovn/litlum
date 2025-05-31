@@ -35,8 +35,8 @@ class TestFeedParser(unittest.TestCase):
         self.feed_config = {
             'name': 'JGR Oceans',
             'type': 'crossref',
-            'issn': '2169-9291',
-            'days_range': 3
+            'issn': '2169-9291'
+            # No days_range specified - should use global default
         }
 
     def test_extract_pub_date_full(self):
@@ -91,8 +91,18 @@ class TestFeedParser(unittest.TestCase):
         self.assertEqual(result['guid'], 'crossref-10.1029/2024jc021997')
 
     @patch('requests.get')
-    def test_parse_feed(self, mock_get):
+    @patch('publication_reader.feeds.parser.Config')
+    def test_parse_feed(self, mock_config, mock_get):
         """Test parsing CrossRef feed."""
+        # Mock config to return a global days_range of 10
+        mock_config_instance = MagicMock()
+        mock_config_instance._load_config.return_value = {
+            'crossref': {
+                'days_range': 10
+            }
+        }
+        mock_config.return_value = mock_config_instance
+        
         # Create a mock response for the requests.get call
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -101,6 +111,9 @@ class TestFeedParser(unittest.TestCase):
             }
         }
         mock_get.return_value = mock_response
+        
+        # Reset and re-initialize the parser to use our mocked config
+        self.parser = FeedParser()
         
         # Call the parse_feed method
         result = self.parser.parse_feed(self.feed_config)
@@ -158,8 +171,18 @@ class TestFeedParser(unittest.TestCase):
         
     @patch('requests.get')
     @patch('datetime.datetime')
-    def test_custom_days_range(self, mock_datetime, mock_get):
+    @patch('publication_reader.feeds.parser.Config')
+    def test_custom_days_range(self, mock_config, mock_datetime, mock_get):
         """Test that days_range parameter is used correctly."""
+        # Mock config to return a global days_range of 10
+        mock_config_instance = MagicMock()
+        mock_config_instance._load_config.return_value = {
+            'crossref': {
+                'days_range': 10
+            }
+        }
+        mock_config.return_value = mock_config_instance
+        
         # Mock the current date to a fixed value
         mock_now = MagicMock()
         mock_now.strftime.return_value = "2025-05-31"
@@ -174,13 +197,16 @@ class TestFeedParser(unittest.TestCase):
         }
         mock_get.return_value = mock_response
         
-        # Create a feed config with custom days_range
+        # Create a feed config with custom days_range that overrides global setting
         custom_feed_config = {
             'name': 'JGR Oceans',
             'type': 'crossref',
             'issn': '2169-9291',
-            'days_range': 7  # 7 days instead of default 3
+            'days_range': 7  # 7 days instead of global default 10
         }
+        
+        # Reset and re-initialize the parser to use our mocked config
+        self.parser = FeedParser()
         
         # Call the parse_feed method
         self.parser.parse_feed(custom_feed_config)

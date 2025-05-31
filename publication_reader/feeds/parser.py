@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from urllib.parse import quote
+from ..config import Config
 
 
 class FeedParser:
@@ -14,6 +15,8 @@ class FeedParser:
         """Initialize the feed parser."""
         self.base_url = "https://api.crossref.org/works"
         self.user_agent = "PublicationReader/1.0 (mailto:you@awi.de)"  # Replace with your email
+        self.config_manager = Config()
+        self.config = self.config_manager._load_config()
     
     def parse_feed(self, feed_config: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Parse publications from CrossRef API based on ISSN.
@@ -32,8 +35,10 @@ class FeedParser:
             return []
         
         try:
-            # Get publications from the configured days range (default: 3 days)
-            days_range = feed_config.get('days_range', 3)
+            # Get publications using journal-specific days_range if specified, otherwise use global default
+            # Global default from config is 10 days if not specified
+            global_days_range = self.config.get('crossref', {}).get('days_range', 10)
+            days_range = feed_config.get('days_range', global_days_range)
             from_date = (datetime.now() - timedelta(days=days_range)).strftime("%Y-%m-%d")
             
             # Construct the API URL

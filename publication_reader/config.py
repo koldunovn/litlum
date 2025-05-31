@@ -7,25 +7,28 @@ from typing import Dict, List, Optional, Any
 
 CONFIG_PATH = Path.home() / ".config" / "publication_reader" / "config.yaml"
 DEFAULT_CONFIG = {
+    "crossref": {
+        "days_range": 10  # Default number of days to look back for all journals
+    },
     "feeds": [
         {
         "name": "JGR Oceans",
         "type": "crossref",
-        "issn": "2169-9291",
-        "days_range": 3
+        "issn": "2169-9291"
+        # Removed specific days_range to use global default
         },
         {
         "name": "Ocean Science",
         "type": "crossref",
-        "issn": "1812-0792",
-        "days_range": 3
+        "issn": "1812-0792"
+        # Removed specific days_range to use global default
         }
         # Add more CrossRef journals as needed
         # {
         #   "name": "Journal Name",
         #   "type": "crossref",
         #   "issn": "XXXX-XXXX",
-        #   "days_range": 3  # Number of days to look back for publications
+        #   "days_range": 7  # Optional: override global days_range for this journal
         # }
         
     ],
