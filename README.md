@@ -219,28 +219,41 @@ Example configuration:
 
 ```yaml
 feeds:
-  - name: Nature
-    url: https://www.nature.com/nature.rss
+  - name: JGR Oceans
+    url: https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=21699291&type=etoc&feed=rss
     type: rss
-  - name: Science
-    url: https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science
+  - name: Ocean Science
+    url: https://os.copernicus.org/rss.xml
     type: rss
-  - name: PNAS
-    url: https://www.pnas.org/action/showFeed?type=etoc&feed=rss
+  - name: Earth's Future
+    url: https://agupubs.onlinelibrary.wiley.com/action/showFeed?jc=23284277&type=etoc&feed=rss
     type: rss
+
+# Separate interests section for better organization and flexibility
+interests:
+  - Arctic ocean
+  - climate modelling
+  - high resolution modelling
+  - sea ice
+  - Southern Ocean
+  - climate change
+
 database:
   path: ~/.local/share/publication_reader/publications.db
+
 ollama:
-  model: llama3
+  model: llama3.2  # Using a specific model version
   host: http://localhost:11434
   relevance_prompt: >
-    Analyze this scientific publication and determine if it's relevant based on the following interests:
-    artificial intelligence, machine learning, computational biology.
-    Rate relevance from 0-10 and explain why.
+    Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}.
+    Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences).
   summary_prompt: >
     Create a concise summary of this scientific publication highlighting key findings and methodology.
+    Keep the summary to 1-2 sentences. Include relevance to these interests: {interests}.
+
 reports:
   path: ~/.local/share/publication_reader/reports
+  min_relevance: 6  # Only include publications with relevance score ≥ 6
 ```
 
 ## Setting Up a Cron Job
