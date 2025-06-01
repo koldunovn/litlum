@@ -1,6 +1,6 @@
 # Publication Reader
 
-A scientific publication monitoring and analysis application that tracks RSS feeds from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
+A scientific publication monitoring and analysis application that tracks new publications from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
 
 ## Features
 
