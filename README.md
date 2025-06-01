@@ -68,13 +68,13 @@ The application provides a command-line interface with several commands:
 python -m litlum fetch
 
 # Analyze unprocessed publications
-python -m publication_reader analyze
+python -m litlum analyze
 
 # Generate and display a report for today
-python -m publication_reader report --generate
+python -m litlum report --generate
 
 # Run the full pipeline (fetch, analyze, report)
-python -m publication_reader run
+python -m litlum run
 
 # Run the full pipeline (fetch, analyze, report) and serve the web interface
 python -m litlum run --serve
