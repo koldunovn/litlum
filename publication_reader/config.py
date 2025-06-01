@@ -123,6 +123,16 @@ DEFAULT_CONFIG = {
         "type": "crossref",
         "issn": "2377-617X"
         },
+        {
+        "name": "Science Advances",
+        "type": "crossref",
+        "issn": "2375-2548"
+        },
+        {
+        "name": "PNAS",
+        "type": "crossref",
+        "issn": "1091-6490"
+        },
         # Add more CrossRef journals as needed
         # {
         #   "name": "Journal Name",
