@@ -1,16 +1,15 @@
 # Litlum
 
-A scientific publication monitoring and analysis application that tracks RSS feeds from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
+A scientific publication monitoring and analysis application that tracks new publications from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
 
 ## Features
 
-- **RSS Feed Monitoring**: Track multiple scientific journal feeds
+- **Journal Monitoring using CrossRef**: Track multiple scientific journal feeds
 - **LLM Integration**: Use Ollama to analyze publication relevance and generate summaries
 - **SQLite Database**: Store publications, analysis results, and daily reports
 - **Rich CLI Interface**: User-friendly terminal interface with formatted output
 - **Static Web Interface**: Browse reports and publications through a clean, modern web UI
-- **Scheduled Execution**: Can be run via cron job for automated monitoring
-- **Customizable**: Configure RSS feeds, LLM prompts, and more via configuration file
+- **Customizable**: Configure Journals, LLM prompts, and more via configuration file
 
 ## Installation
 
@@ -55,8 +54,9 @@ First, activate the micromamba environment:
 # Activate the litlum environment
 micromamba activate litlum
 
-# Or run a single command:
- micromamba run -n litlum <command>
+
+# Or, if you prefer to use the environment just for a single command:
+micromamba run -n publication_reader <command>
 ```
 
 The application provides a command-line interface with several commands. You can run the application in multiple ways:
