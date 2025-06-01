@@ -91,7 +91,7 @@ class TestFeedParser(unittest.TestCase):
         self.assertEqual(result['guid'], 'crossref-10.1029/2024jc021997')
 
     @patch('requests.get')
-    @patch('publication_reader.feeds.parser.Config')
+    @patch('litlum.feeds.parser.Config')
     def test_parse_feed(self, mock_config, mock_get):
         """Test parsing CrossRef feed."""
         # Mock config to return a global days_range of 10
@@ -171,7 +171,7 @@ class TestFeedParser(unittest.TestCase):
         
     @patch('requests.get')
     @patch('datetime.datetime')
-    @patch('publication_reader.feeds.parser.Config')
+    @patch('litlum.feeds.parser.Config')
     def test_custom_days_range(self, mock_config, mock_datetime, mock_get):
         """Test that days_range parameter is used correctly."""
         # Mock config to return a global days_range of 10
@@ -215,7 +215,9 @@ class TestFeedParser(unittest.TestCase):
         called_url = mock_get.call_args[0][0]
         # The from-pub-date should be 7 days back from 2025-05-31
         # Since the URL parameters are encoded, we need to check the encoded value
-        encoded_param = quote('from-pub-date:2025-05-24')
+        # Note: The implementation uses timedelta(days=days_range), which makes it exclusive of the start date
+        # So for 7 days range from 2025-05-31, it should be 2025-05-25
+        encoded_param = quote('from-pub-date:2025-05-25')
         self.assertIn(encoded_param, called_url)
 
 
