@@ -1,4 +1,4 @@
-# Litlum
+# LitLum
 
 A scientific publication monitoring and analysis application that tracks new publications from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
 
@@ -9,7 +9,9 @@ A scientific publication monitoring and analysis application that tracks new pub
 - **SQLite Database**: Store publications, analysis results, and daily reports
 - **Rich CLI Interface**: User-friendly terminal interface with formatted output
 - **Static Web Interface**: Browse reports and publications through a clean, modern web UI
-- **Customizable**: Configure Journals, LLM prompts, and more via configuration file
+- **Customizable**: Configure journals, LLM prompts, and more via YAML configuration
+- **Docker Support**: Easy deployment using Docker containers
+- **Configuration Management**: Default configuration with user overrides
 
 ## Installation
 
@@ -194,46 +196,65 @@ python -m publication_reader reset --force
 
 The default configuration file is created at `~/.config/litlum/config.yaml` when you first run the application. You can edit this file to:
 
-- Add or modify RSS feeds
-- Configure the Ollama model and prompts
-- Change database and reports paths
+1. Environment variables
+2. User configuration file (`~/.config/litlum/config.yaml`)
+3. Default configuration (included in the package)
 
-Example configuration:
+### Default Configuration
+
+The default configuration is included in the package and provides sensible defaults. You can view the default configuration by running:
+
+```bash
+litlum config show-default
+```
+
+### User Configuration
+
+To customize the configuration, create a `config.yaml` file in `~/.config/litlum/`. The file will be merged with the default configuration, with your settings taking precedence.
+
+Example user configuration:
 
 ```yaml
-crossref:
-  days_range: 10
+# ~/.config/litlum/config.yaml
+
+# Override database location
 database:
-  path: ~/.local/share/litlum/publications.db
-feeds:
-- issn: 2169-9291
-  name: JGR Oceans
-  type: crossref
-- issn: 1812-0792
-  name: Ocean Science
-  type: crossref
+  path: "/path/to/custom/location/litlum.db"
 
+# Add your interests
 interests:
-- Arctic ocean
-- climate modelling
-- high resolution modelling
-- sea ice
-- Southern Ocean
-- climate change
-ollama:
-  host: http://localhost:11434
-  model: llama3.2
-  relevance_prompt: 'Analyze this scientific publication and determine if it''s relevant
-    based on the following interests: {interests}. Rate relevance from 0-10 and explain
-    why. Keep your explanation brief (1-2 sentences).'
-  summary_prompt: 'Create a very concise summary (1-2 sentences) of this scientific
-    publication highlighting key findings and briefly explain its relevance to the
-    following interests: {interests}.'
-reports:
-  min_relevance: 5
-  path: ~/.local/share/litlum/reports
+  - "Arctic ocean"
+  - "climate modelling"
+  - "machine learning"
+  - "ocean eddies"
 
+# Configure Ollama
+ollama:
+  model: "llama3.2"
+  host: "http://localhost:11434"
+
+# Add more journal feeds
+feeds:
+  - name: "Nature Climate Change"
+    type: "crossref"
+    issn: "1758-6798"
+    active: true
+  - name: "Science"
+    type: "crossref"
+    issn: "1095-9203"
+    active: true
 ```
+
+### Environment Variables
+
+You can override configuration using environment variables:
+
+- `LITLUM_CONFIG_DIR`: Directory containing the config file (default: `~/.config/litlum`)
+- `LITLUM_DATA_DIR`: Base directory for data storage (default: `~/.local/share/litlum`)
+- `OLLAMA_HOST`: Ollama server URL (default: `http://localhost:11434`)
+- `LITLUM_DB_PATH`: Override database path
+- `LITLUM_REPORTS_PATH`: Override reports directory
+- `LITLUM_WEB_PATH`: Override web output directory
 
 ## Setting Up a Cron Job
 

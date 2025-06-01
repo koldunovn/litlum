@@ -313,13 +313,23 @@ class CLI:
         
         # Generate new report if requested
         if args.generate:
-            publications = self.db.get_publications_by_date(date_str)
+            # Get the min_relevance from the report generator
+            min_relevance = self.report_generator.min_relevance
+            
+            # Get publications with minimum relevance score
+            publications = self.db.get_publications_by_date(date_str, min_relevance)
             
             if not publications:
-                self.console.print(f"[bold yellow]No publications found for {date_str}.[/bold yellow]")
+                self.console.print(
+                    f"[bold yellow]No publications found for {date_str} "
+                    f"with relevance >= {min_relevance}.[/bold yellow]"
+                )
                 return
             
-            self.console.print(f"[bold]Generating report for {date_str}...[/bold]")
+            self.console.print(
+                f"[bold]Generating report for {date_str} with "
+                f"min_relevance={min_relevance}...[/bold]"
+            )
             report_data = self.report_generator.generate_daily_report(publications, date_str)
             
             # Extract the summary text from the report dictionary

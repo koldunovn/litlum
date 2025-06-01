@@ -129,11 +129,12 @@ class Database:
         ''')
         return [dict(row) for row in cursor.fetchall()]
     
-    def get_publications_by_date(self, date: str) -> List[Dict[str, Any]]:
-        """Get publications processed on a specific date.
+    def get_publications_by_date(self, date: str, min_relevance: int = 0) -> List[Dict[str, Any]]:
+        """Get publications processed on a specific date with minimum relevance score.
         
         Args:
             date: Date string in ISO format (YYYY-MM-DD)
+            min_relevance: Minimum relevance score (0-10)
             
         Returns:
             List of publication dictionaries
@@ -143,12 +144,13 @@ class Database:
         SELECT id, journal, title, abstract, url, pub_date, guid, relevance_score, llm_summary
         FROM publications
         WHERE date(processed_date) = ?
+        AND (relevance_score IS NULL OR relevance_score >= ?)
         ORDER BY relevance_score DESC
-        ''', (date,))
+        ''', (date, min_relevance))
         return [dict(row) for row in cursor.fetchall()]
     
     def get_recent_publications(self, days: int = 1, min_relevance: int = 0) -> List[Dict[str, Any]]:
-        """Get publications from the last N days with minimum relevance score.
+        """Get recent publications from the last N days with minimum relevance score.
         
         Args:
             days: Number of days to look back
@@ -161,10 +163,13 @@ class Database:
         cursor.execute('''
         SELECT id, journal, title, abstract, url, pub_date, guid, relevance_score, llm_summary
         FROM publications
-        WHERE date(processed_date) >= date('now', ?) 
-        AND relevance_score >= ?
-        ORDER BY relevance_score DESC, processed_date DESC
-        ''', (f'-{days} day', min_relevance))
+        WHERE date(processed_date) >= date('now', ? || ' days')
+        AND (relevance_score IS NULL OR relevance_score >= ?)
+        ORDER BY 
+            CASE WHEN relevance_score IS NULL THEN 1 ELSE 0 END,
+            relevance_score DESC,
+            pub_date DESC
+        ''', (f'-{days}', min_relevance))
         return [dict(row) for row in cursor.fetchall()]
     
     def save_daily_summary(self, date: str, summary: str) -> int:

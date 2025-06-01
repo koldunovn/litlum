@@ -35,3 +35,7 @@ ENV/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Docker data directories
+config/
+data/

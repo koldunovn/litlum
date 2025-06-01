@@ -96,7 +96,8 @@ class TestFeedParser(unittest.TestCase):
         """Test parsing CrossRef feed."""
         # Mock config to return a global days_range of 10
         mock_config_instance = MagicMock()
-        mock_config_instance._load_config.return_value = {
+        mock_config_instance.get.return_value = 10  # For days_range
+        mock_config_instance._config = {
             'crossref': {
                 'days_range': 10
             }
