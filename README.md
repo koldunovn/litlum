@@ -1,4 +1,4 @@
-# Litlum
+# LitLum
 
 A scientific publication monitoring and analysis application that tracks new publications from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
 
