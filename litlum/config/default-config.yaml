@@ -106,6 +106,7 @@ feeds:
     type: "crossref"
     issn: "1091-6490"
     active: true
+    
 # User interests for filtering publications
 interests:
   - "Arctic ocean"
