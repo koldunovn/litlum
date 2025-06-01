@@ -56,50 +56,70 @@ First, activate the micromamba environment:
 micromamba activate litlum
 
 # Or run a single command:
-# micromamba run -n litlum <command>
+ micromamba run -n litlum <command>
 ```
 
-The application provides a command-line interface with several commands:
+The application provides a command-line interface with several commands. You can run the application in multiple ways:
+
+1. **Recommended**: Using the `litlum` command (after installation with `pip install -e .`):
+   ```bash
+   # First activate the environment
+   micromamba activate litlum
+   
+   # Then use the litlum command
+   litlum --help  # Show help and available commands
+   ```
+   > **Note**: The `litlum` command is only available when the environment is activated.
+
+2. Using Python's `-m` flag (works without activating the environment):
+   ```bash
+   python -m litlum --help
+   ```
+
+3. Using Micromamba (works without activating the environment):
+   ```bash
+   micromamba run -n litlum litlum --help
+   ```
 
 ### Basic Commands
 
 ```bash
 # Fetch new publications from configured RSS feeds
-python -m litlum fetch
+litlum fetch
 
 # Analyze unprocessed publications
-python -m litlum analyze
+litlum analyze
 
 # Generate and display a report for today
-python -m litlum report --generate
+litlum report --generate
 
 # Run the full pipeline (fetch, analyze, report)
-python -m litlum run
+litlum run
 
 # Run the full pipeline (fetch, analyze, report) and serve the web interface
-python -m litlum run --serve
+litlum run --serve
 ```
 
 ### Additional Commands
 
 ```bash
 # List available reports
-python -m litlum list --reports
+litlum list --reports
 
 # List recent publications with minimum relevance score
-python -m litlum list --publications --days 7 --min-relevance 5
+litlum list --publications --days 7 --min-relevance 5
 
 # Show details for a specific publication
-python -m litlum show <publication_id>
+litlum show <publication_id>
 
 # Reanalyze publications from a specific date
-python -m publication_reader analyze --date 2025-05-30 --reanalyze
+litlum analyze --date 2025-05-30 --reanalyze
 
 # Reset the database (useful for debugging)
-python -m publication_reader reset
+litlum reset
 
 # Reset without confirmation prompt
-python -m publication_reader reset --force
+micromamba run -n litlum python -m litlum reset --force
 ```
 
 ### Advanced Usage
@@ -112,7 +132,7 @@ To view detailed information about a specific publication, including its abstrac
 
 ```bash
 # Show publication with ID 5
-python -m litlum show 5
+litlum show 5
 ```
 
 
