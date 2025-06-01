@@ -206,7 +206,7 @@ class ReportGenerator:
             ))
             
             self.console.print(f"\n[bold]To view detailed information about a publication, use:[/bold]")
-            self.console.print(f"python -m publication_reader show <ID>")
+            self.console.print(f"python -m litlum show <ID>")
         else:
             self.console.print(f"[yellow]No publications with relevance score >= {self.min_relevance} found in this report.[/yellow]")
             self.console.print(f"[yellow]Adjust the minimum relevance threshold in config.yaml if needed.[/yellow]")

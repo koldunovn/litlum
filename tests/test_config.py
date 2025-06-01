@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the project root directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from publication_reader.config import Config
+from litlum.config import Config
 
 
 class TestConfig(unittest.TestCase):

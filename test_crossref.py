@@ -6,8 +6,8 @@ This script tests the FeedParser with CrossRef journal configurations.
 
 import sys
 from pprint import pprint
-from publication_reader.feeds.parser import FeedParser
-from publication_reader.config import Config
+from litlum.feeds.parser import FeedParser
+from litlum.config import Config
 
 def test_crossref_parser():
     """Test the CrossRef API parser with the configured journals."""

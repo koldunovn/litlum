@@ -9,7 +9,7 @@ from typing import Dict, List, Any, Optional
 import re
 
 class StaticSiteGenerator:
-    """Generate static HTML pages for publication reader reports."""
+    """Generate static HTML pages for LitLum reports."""
     
     def __init__(self, reports_path: str, output_path: str):
         """Initialize the static site generator.

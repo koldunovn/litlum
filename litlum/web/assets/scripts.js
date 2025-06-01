@@ -1,5 +1,5 @@
 /**
- * Publication Reader Web Interface Scripts
+ * LitLum Web Interface Scripts
  */
 
 // Toggle publication details visibility
@@ -22,5 +22,5 @@ function toggleDetails(pubId) {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Any initialization code can go here
-    console.log('Publication Reader Web Interface initialized');
+    console.log('LitLum Web Interface initialized');
 });

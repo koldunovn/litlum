@@ -1,4 +1,4 @@
-"""Simple HTTP server for the publication reader static website."""
+"""Simple HTTP server for the LitLum static website."""
 
 import os
 import argparse
@@ -7,7 +7,7 @@ import socketserver
 from pathlib import Path
 from typing import Optional
 
-from publication_reader.config import Config
+from litlum.config import Config
 
 
 def run_server(web_path: Optional[str] = None, port: int = 8080) -> None:
@@ -27,7 +27,7 @@ def run_server(web_path: Optional[str] = None, port: int = 8080) -> None:
     if not os.path.exists(web_path):
         print(f"Error: Web path {web_path} does not exist")
         print("Make sure you have generated the static website first with:")
-        print("python -m publication_reader web")
+        print("python -m litlum web")
         return
     
     # Check if index.html exists

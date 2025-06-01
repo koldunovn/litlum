@@ -1,4 +1,4 @@
-"""Command line interface for the publication reader application."""
+"""Command line interface for the LitLum application."""
 
 import sys
 import os
@@ -12,16 +12,16 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
 
-from publication_reader.config import Config
-from publication_reader.db.database import Database
-from publication_reader.feeds.parser import FeedParser
-from publication_reader.llm.analyzer import OllamaAnalyzer
-from publication_reader.reports.generator import ReportGenerator
-from publication_reader.web.static_site_generator import StaticSiteGenerator
+from litlum.config import Config
+from litlum.db.database import Database
+from litlum.feeds.parser import FeedParser
+from litlum.llm.analyzer import OllamaAnalyzer
+from litlum.reports.generator import ReportGenerator
+from litlum.web.static_site_generator import StaticSiteGenerator
 
 
 class CLI:
-    """Command line interface for the publication reader."""
+    """Command line interface for the LitLum application."""
     
     def __init__(self):
         """Initialize the CLI interface."""

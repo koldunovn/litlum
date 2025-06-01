@@ -5,7 +5,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-CONFIG_PATH = Path.home() / ".config" / "publication_reader" / "config.yaml"
+CONFIG_PATH = Path.home() / ".config" / "litlum" / "config.yaml"
 DEFAULT_CONFIG = {
     "crossref": {
         "days_range": 10  # Default number of days to look back for all journals
@@ -17,122 +17,122 @@ DEFAULT_CONFIG = {
         "issn": "2169-9291"
         # Removed specific days_range to use global default
         },
-        {
-        "name": "Ocean Science",
-        "type": "crossref",
-        "issn": "1812-0792"
-        # Removed specific days_range to use global default
-        },
-        {
-        "name": "BAMS",
-        "type": "crossref",
-        "issn": "1520-0477"
-        },
-        {
-        "name": "GMD",
-        "type": "crossref",
-        "issn": "1991-9603"
-        },
-        {
-        "name": "GRL",
-        "type": "crossref",
-        "issn": "1944-8007"
-        },
-        {
-        "name": "JAMES",
-        "type": "crossref",
-        "issn": "1942-2466"
-        },
-        {
-        "name": "JGR Atmospheres",
-        "type": "crossref",
-        "issn": "2169-8996"
-        },
-        {
-        "name": "Journal of Climate",
-        "type": "crossref",
-        "issn": "1520-0442"
-        },
-        {
-        "name": "JPO",
-        "type": "crossref",
-        "issn": "1520-0485"
-        },
-        {
-        "name": "Monthly Weather Review",
-        "type": "crossref",
-        "issn": "1520-0493"
-        },
-        {
-        "name": "Nature Climate Change",
-        "type": "crossref",
-        "issn": "1758-6798"
-        },
-        {
-        "name": "Nature Geoscience",
-        "type": "crossref",
-        "issn": "1752-0908"
-        },
-        {
-        "name": "Ocean Dynamics",
-        "type": "crossref",
-        "issn": "1616-7228"
-        },
-        {
-        "name": "Progress in Oceanography",
-        "type": "crossref",
-        "issn": "1873-4472"
-        },
-        {
-        "name": "Reviews of Geophysics",
-        "type": "crossref",
-        "issn": "1944-9208"
-        },
-        {
-        "name": "Ocean Modelling",
-        "type": "crossref",
-        "issn": "1463-5011"
-        },
-        {
-        "name": "The Cryosphere",
-        "type": "crossref",
-        "issn": "1994-0424"
-        },
-        {
-        "name": "Communications Earth & Environment",
-        "type": "crossref",
-        "issn": "2662-4435"
-        },
-        {
-        "name": "Nature",
-        "type": "crossref",
-        "issn": "1476-4687"
-        },
-        {
-        "name": "Science",
-        "type": "crossref",
-        "issn": "1095-9203"
-        },
-        {
-        "name": "GGR: MLC",
-        "type": "crossref",
-        "issn": "2993-5210"
-        },
-        {
-        "name": "Oceanography",
-        "type": "crossref",
-        "issn": "2377-617X"
-        },
-        {
-        "name": "Science Advances",
-        "type": "crossref",
-        "issn": "2375-2548"
-        },
-        {
-        "name": "PNAS",
-        "type": "crossref",
-        "issn": "1091-6490"
-        },
+        # {
+        # "name": "Ocean Science",
+        # "type": "crossref",
+        # "issn": "1812-0792"
+        # # Removed specific days_range to use global default
+        # },
+        # {
+        # "name": "BAMS",
+        # "type": "crossref",
+        # "issn": "1520-0477"
+        # },
+        # {
+        # "name": "GMD",
+        # "type": "crossref",
+        # "issn": "1991-9603"
+        # },
+        # {
+        # "name": "GRL",
+        # "type": "crossref",
+        # "issn": "1944-8007"
+        # },
+        # {
+        # "name": "JAMES",
+        # "type": "crossref",
+        # "issn": "1942-2466"
+        # },
+        # {
+        # "name": "JGR Atmospheres",
+        # "type": "crossref",
+        # "issn": "2169-8996"
+        # },
+        # {
+        # "name": "Journal of Climate",
+        # "type": "crossref",
+        # "issn": "1520-0442"
+        # },
+        # {
+        # "name": "JPO",
+        # "type": "crossref",
+        # "issn": "1520-0485"
+        # },
+        # {
+        # "name": "Monthly Weather Review",
+        # "type": "crossref",
+        # "issn": "1520-0493"
+        # },
+        # {
+        # "name": "Nature Climate Change",
+        # "type": "crossref",
+        # "issn": "1758-6798"
+        # },
+        # {
+        # "name": "Nature Geoscience",
+        # "type": "crossref",
+        # "issn": "1752-0908"
+        # },
+        # {
+        # "name": "Ocean Dynamics",
+        # "type": "crossref",
+        # "issn": "1616-7228"
+        # },
+        # {
+        # "name": "Progress in Oceanography",
+        # "type": "crossref",
+        # "issn": "1873-4472"
+        # },
+        # {
+        # "name": "Reviews of Geophysics",
+        # "type": "crossref",
+        # "issn": "1944-9208"
+        # },
+        # {
+        # "name": "Ocean Modelling",
+        # "type": "crossref",
+        # "issn": "1463-5011"
+        # },
+        # {
+        # "name": "The Cryosphere",
+        # "type": "crossref",
+        # "issn": "1994-0424"
+        # },
+        # {
+        # "name": "Communications Earth & Environment",
+        # "type": "crossref",
+        # "issn": "2662-4435"
+        # },
+        # {
+        # "name": "Nature",
+        # "type": "crossref",
+        # "issn": "1476-4687"
+        # },
+        # {
+        # "name": "Science",
+        # "type": "crossref",
+        # "issn": "1095-9203"
+        # },
+        # {
+        # "name": "GGR: MLC",
+        # "type": "crossref",
+        # "issn": "2993-5210"
+        # },
+        # {
+        # "name": "Oceanography",
+        # "type": "crossref",
+        # "issn": "2377-617X"
+        # },
+        # {
+        # "name": "Science Advances",
+        # "type": "crossref",
+        # "issn": "2375-2548"
+        # },
+        # {
+        # "name": "PNAS",
+        # "type": "crossref",
+        # "issn": "1091-6490"
+        # },
         # Add more CrossRef journals as needed
         # {
         #   "name": "Journal Name",
@@ -143,7 +143,7 @@ DEFAULT_CONFIG = {
         
     ],
     "database": {
-        "path": "~/.local/share/publication_reader/publications.db"
+        "path": "~/.local/share/litlum/publications.db"
     },
     "interests": [
         "Arctic ocean", 
@@ -162,18 +162,18 @@ DEFAULT_CONFIG = {
         "climate change"
     ],
     "ollama": {
-        "model": "gemma3:27b", # default is llama3.2, but gemma3:27b works and show better results
+        "model": "llama3.2", # default is llama3.2, but gemma3:27b works and show better results
         "host": "http://localhost:11434",
         "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences)",
         "summary_prompt": "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings."
     },
     "reports": {
-        "path": "~/.local/share/publication_reader/reports",
+        "path": "~/.local/share/litlum/reports",
         "min_relevance": 5
     },
     "web": {
-        "path": "~/.local/share/publication_reader/web",
-        "title": "Publication Reader"
+        "path": "~/.local/share/litlum/web",
+        "title": "LitLum"
     }
 }
 

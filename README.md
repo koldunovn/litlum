@@ -1,4 +1,4 @@
-# Publication Reader
+# Litlum
 
 A scientific publication monitoring and analysis application that tracks RSS feeds from scientific journals, analyzes them using Ollama LLM, and generates relevance reports.
 
@@ -25,14 +25,14 @@ A scientific publication monitoring and analysis application that tracks RSS fee
 1. Create a new environment:
 
 ```bash
-micromamba create -n publication_reader python=3.10
+micromamba create -n litlum python=3.10
 ```
 
 2. Install the package and dependencies:
 
 ```bash
-# Activate the environment (or use micromamba run -n publication_reader)
-micromamba run -n publication_reader pip install -e .
+# Activate the environment (or use micromamba run -n litlum)
+micromamba run -n litlum pip install -e .
 ```
 
 ### Ollama Setup
@@ -52,11 +52,11 @@ ollama pull llama3.2
 First, activate the micromamba environment:
 
 ```bash
-# Activate the publication_reader environment
-micromamba activate publication_reader
+# Activate the litlum environment
+micromamba activate litlum
 
-# Or, if you prefer to use the environment just for a single command:
-# micromamba run -n publication_reader <command>
+# Or run a single command:
+# micromamba run -n litlum <command>
 ```
 
 The application provides a command-line interface with several commands:
@@ -65,7 +65,7 @@ The application provides a command-line interface with several commands:
 
 ```bash
 # Fetch new publications from configured RSS feeds
-python -m publication_reader fetch
+python -m litlum fetch
 
 # Analyze unprocessed publications
 python -m publication_reader analyze
@@ -77,20 +77,20 @@ python -m publication_reader report --generate
 python -m publication_reader run
 
 # Run the full pipeline (fetch, analyze, report) and serve the web interface
-python -m publication_reader run --serve
+python -m litlum run --serve
 ```
 
 ### Additional Commands
 
 ```bash
 # List available reports
-python -m publication_reader list --reports
+python -m litlum list --reports
 
 # List recent publications with minimum relevance score
-python -m publication_reader list --publications --days 7 --min-relevance 5
+python -m litlum list --publications --days 7 --min-relevance 5
 
 # Show details for a specific publication
-python -m publication_reader show <publication_id>
+python -m litlum show <publication_id>
 
 # Reanalyze publications from a specific date
 python -m publication_reader analyze --date 2025-05-30 --reanalyze
@@ -112,7 +112,7 @@ To view detailed information about a specific publication, including its abstrac
 
 ```bash
 # Show publication with ID 5
-python -m publication_reader show 5
+python -m litlum show 5
 ```
 
 
@@ -122,7 +122,7 @@ Filter publications by date range and minimum relevance score:
 
 ```bash
 # List publications from the last 14 days with relevance score of at least 6
-python -m publication_reader list --publications --days 14 --min-relevance 6
+python -m litlum list --publications --days 14 --min-relevance 6
 
 ```
 
@@ -132,7 +132,7 @@ Reanalyze publications if you've changed your interests or LLM configuration:
 
 ```bash
 # Reanalyze all publications
-python -m publication_reader analyze --reanalyze
+python -m litlum analyze --reanalyze
 
 # Reanalyze publications from a specific date
 python -m publication_reader analyze --date 2025-05-30 --reanalyze
@@ -148,10 +148,10 @@ Generate and view reports:
 python -m publication_reader report --generate
 
 # Generate a report for a specific date
-python -m publication_reader report --generate --date 2025-05-30
+python -m litlum report --generate --date 2025-05-30
 
 # View a report for a specific date
-python -m publication_reader report --date 2025-05-30
+python -m litlum report --date 2025-05-30
 ```
 
 > Note: The minimum relevance for reports is configured in the `config.yaml` file under the `reports` section. To customize this, update your configuration file.
@@ -172,7 +172,7 @@ python -m publication_reader reset --force
 
 ## Configuration
 
-The default configuration file is created at `~/.config/publication_reader/config.yaml` when you first run the application. You can edit this file to:
+The default configuration file is created at `~/.config/litlum/config.yaml` when you first run the application. You can edit this file to:
 
 - Add or modify RSS feeds
 - Configure the Ollama model and prompts
@@ -184,7 +184,7 @@ Example configuration:
 crossref:
   days_range: 10
 database:
-  path: ~/.local/share/publication_reader/publications.db
+  path: ~/.local/share/litlum/publications.db
 feeds:
 - issn: 2169-9291
   name: JGR Oceans
@@ -211,7 +211,7 @@ ollama:
     following interests: {interests}.'
 reports:
   min_relevance: 5
-  path: ~/.local/share/publication_reader/reports
+  path: ~/.local/share/litlum/reports
 
 ```
 
@@ -219,28 +219,28 @@ reports:
 
 To run the application automatically, you can set up a cron job:
 
-1. Create a script to run the application (e.g., `~/scripts/run_publication_reader.sh`):
+1. Create a script to run the application (e.g., `~/scripts/run_litlum.sh`):
 
 ```bash
 #!/bin/bash
 export PATH="/path/to/micromamba/bin:$PATH"
 
 # Activate the environment and run the command
-micromamba activate publication_reader
-python -m publication_reader run
+micromamba activate litlum
+python -m litlum run
 ```
 
 2. Make the script executable:
 
 ```bash
-chmod +x ~/scripts/run_publication_reader.sh
+chmod +x ~/scripts/run_litlum.sh
 ```
 
 3. Add a cron job (edit with `crontab -e`):
 
 ```
 # Run daily at 8 AM
-0 8 * * * ~/scripts/run_publication_reader.sh
+0 8 * * * ~/scripts/run_litlum.sh
 ```
 
 ## Web Interface
@@ -265,10 +265,10 @@ The publication reader now includes a static web interface that makes it easy to
 python -m publication_reader web
 
 # Generate and serve the website locally
-python -m publication_reader web --serve
+python -m litlum web --serve
 ```
 
-The web interface will be generated in the configured web path (default: `~/.local/share/publication_reader/web`).
+The web interface will be generated in the configured web path (default: `~/.local/share/litlum/web`).
 
 ## Future Development
 
