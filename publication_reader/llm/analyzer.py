@@ -4,6 +4,26 @@ import re
 import ollama
 from typing import Dict, Any, Tuple, Optional
 import os
+from rich.console import Console
+from rich.panel import Panel
+from rich.syntax import Syntax
+from rich.text import Text
+from rich.theme import Theme
+
+# Custom theme for consistent styling
+ANALYZER_THEME = Theme({
+    "info": "cyan",
+    "warning": "yellow",
+    "error": "red",
+    "success": "green",
+    "debug": "blue",
+    "prompt": "magenta",
+    "response": "green",
+    "relevance": "cyan",
+    "summary": "yellow"
+})
+
+console = Console(theme=ANALYZER_THEME)
 
 
 class OllamaAnalyzer:
@@ -39,16 +59,29 @@ class OllamaAnalyzer:
         if not title or not abstract:
             return 0, "Insufficient data for analysis"
         
+        # Print paper header
+        console.print(f"\n{'='*80}")
+        console.print(f"[bold blue]PAPER:[/] {title}")
+        console.print(f"[bold blue]JOURNAL:[/] {journal}")
+        
         # Get relevance score
         relevance_score, relevance_text = self._determine_relevance(title, abstract)
         
-        # Always generate a summary, but with different detail level based on relevance
+        # Generate summary based on relevance score
         if relevance_score >= 7:  # Highly relevant
             summary = self._generate_summary(title, abstract, journal, relevance_score, relevance_text)
+            console.print("[bold green]✓ Analysis complete - High Relevance[/]")
         elif relevance_score >= 5:  # Moderately relevant
             summary = self._generate_summary(title, abstract, journal, relevance_score, relevance_text, detailed=False)
+            console.print("[bold yellow]✓ Analysis complete - Moderate Relevance[/]")
         else:  # Low relevance
-            summary = f"## Low Relevance Analysis\n\nThis publication has a relevance score of {relevance_score}/10.\n\n{relevance_text}"
+            console.print(f"[bold red]✗ Skipping detailed analysis - Low Relevance ({relevance_score}/10)[/]")
+            summary = (
+                f"## ⚠️ Low Relevance Analysis\n\n"
+                f"This publication has a relevance score of [bold red]{relevance_score}/10[/].\n\n"
+                f"**Reason for low relevance:** {relevance_text}\n\n"
+                f"No detailed summary was generated due to low relevance score."
+            )
         
         return relevance_score, summary
     
@@ -66,12 +99,9 @@ class OllamaAnalyzer:
             # Define the analysis prompt - this already includes interests from config file
             prompt = self._create_relevance_prompt(title, abstract)
             
-            # Print prompt for debugging with nice formatting
-            print("\n" + "="*80)
-            print(f"[DEBUG] PROMPT SENT TO LLM:")
-            print("-"*80)
-            print(f"{prompt}")
-            print("="*80)
+            # Display prompt with Rich formatting
+            console.print("\n[bold]📤 PROMPT SENT TO LLM:[/]")
+            console.print(Syntax(prompt, "text", theme="monokai", word_wrap=True), style="prompt")
             
             # Call the LLM
             response = ollama.chat(
@@ -87,12 +117,9 @@ class OllamaAnalyzer:
             # Extract the response text
             response_text = response['message']['content']
             
-            # Print response for debugging with nice formatting
-            print("\n" + "="*80)
-            print(f"[DEBUG] LLM RESPONSE:")
-            print("-"*80)
-            print(f"{response_text}")
-            print("="*80)
+            # Display response with Rich formatting
+            console.print("\n[bold]📥 LLM RESPONSE:[/]")
+            console.print(Syntax(response_text, "text", theme="monokai", word_wrap=True), style="response")
             
             # Try multiple patterns to extract relevance score (models format scores differently)
             # First try the standard N/10 format
@@ -113,13 +140,17 @@ class OllamaAnalyzer:
             if not relevance_match:
                 relevance_match = re.search(r'\b([0-9]|10)\b', response_text)
             
-            # Print relevance match details with nice formatting
+            # Display relevance match details with Rich formatting
+            console.print("\n[bold]🔍 RELEVANCE ANALYSIS:[/]")
             if relevance_match:
-                print(f"\n[DEBUG] RELEVANCE MATCH: Score {relevance_match.group(1)}/10")
-                print(f"        Pattern matched: '{relevance_match.group(0)}'")
-                print(f"        Match position: characters {relevance_match.span()[0]}-{relevance_match.span()[1]}")
+                score = int(relevance_match.group(1))
+                score_style = "success" if score >= 7 else "warning" if score >= 5 else "error"
+                
+                console.print(f"  [bold]Score:[/] [bold {score_style}]{score}/10[/]")
+                console.print(f"  [bold]Match:[/] '{relevance_match.group(0)}'")
+                console.print(f"  [bold]Position:[/] characters {relevance_match.span()[0]}-{relevance_match.span()[1]}")
             else:
-                print("\n[DEBUG] NO RELEVANCE MATCH FOUND - defaulting to 0/10")
+                console.print("  [bold red]NO RELEVANCE MATCH FOUND - defaulting to 0/10[/]")
             
             # Use the first captured group as the relevance score
             relevance_score = int(relevance_match.group(1)) if relevance_match else 0
@@ -129,13 +160,14 @@ class OllamaAnalyzer:
                                         response_text, re.IGNORECASE | re.DOTALL)
             explanation = explanation_match.group(1).strip() if explanation_match else ""
             
-            print(f"\n[DEBUG] FINAL RELEVANCE SCORE: {relevance_score}/10")
+            score_style = "success" if relevance_score >= 7 else "warning" if relevance_score >= 5 else "error"
+            console.print(f"  [bold]Final Score:[/] [bold {score_style}]{relevance_score}/10[/]")
 
             
             return relevance_score, explanation
         
         except Exception as e:
-            print(f"Error determining relevance: {str(e)}")
+            console.print(f"[bold red]Error determining relevance:[/] {str(e)}")
             return 0, f"Error analyzing relevance: {str(e)}"
     
     def _generate_summary(self, title: str, abstract: str, journal: str = '', relevance_score: int = 0, 
@@ -176,14 +208,17 @@ class OllamaAnalyzer:
             # Get the raw summary without truncation
             summary_text = response['message']['content'].strip()
 
-            print(f"[DEBUG] LLM SUMMARY:")
-            print("-"*80)
-            print(f"{summary_text}")
-            print("="*80)
+            console.print("\n[bold]📝 SUMMARY:[/]")
+            console.print(Panel(
+                summary_text,
+                title="Summary",
+                border_style="summary",
+                expand=False
+            ))
 
             return summary_text
         except Exception as e:
-            print(f"Error generating summary: {str(e)}")
+            console.print(f"[bold red]Error generating summary:[/] {str(e)}")
             return f"Error generating summary: {str(e)}"
     
     def _create_relevance_prompt(self, title: str, abstract: str) -> str:
