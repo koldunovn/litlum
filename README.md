@@ -104,7 +104,7 @@ python -m publication_reader reset --force
 
 ### Advanced Usage
 
-This section demonstrates more complex workflows and advanced options for working with the publication reader.
+This section demonstrates more complex workflows and advanced options for working with the LitLum application.
 
 #### Viewing Individual Publications
 
@@ -245,7 +245,7 @@ chmod +x ~/scripts/run_litlum.sh
 
 ## Web Interface
 
-The publication reader now includes a static web interface that makes it easy to browse reports and publications:
+The LitLum application now includes a static web interface that makes it easy to browse reports and publications:
 
 ### Features
 

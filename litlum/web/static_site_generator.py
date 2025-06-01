@@ -1,4 +1,4 @@
-"""Static site generator for publication reader reports."""
+"""Static site generator for LitLum reports."""
 
 import os
 import json
@@ -128,7 +128,7 @@ class StaticSiteGenerator:
         if not reports_html:
             reports_html = """
             <div class="no-reports">
-                <p>No reports available yet. Run the publication reader to generate reports.</p>
+                <p>No reports available yet. Run the LitLum application to generate reports.</p>
             </div>
             """
             
@@ -261,13 +261,13 @@ class StaticSiteGenerator:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Publication Reader - Reports</title>
+    <title>LitLum - Reports</title>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>Publication Reader</h1>
+            <h1>LitLum</h1>
             <p>Scientific Publication Reports</p>
         </div>
     </header>
@@ -282,7 +282,7 @@ class StaticSiteGenerator:
     
     <footer>
         <div class="container">
-            <p>&copy; 2025 Publication Reader</p>
+            <p>&copy; 2025 LitLum</p>
         </div>
     </footer>
     
@@ -295,13 +295,13 @@ class StaticSiteGenerator:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report - {{REPORT_DATE}} - Publication Reader</title>
+    <title>Report - {{REPORT_DATE}} - LitLum</title>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>Publication Reader</h1>
+            <h1>LitLum</h1>
             <p>Scientific Publication Reports</p>
         </div>
     </header>
@@ -325,7 +325,7 @@ class StaticSiteGenerator:
     
     <footer>
         <div class="container">
-            <p>&copy; 2025 Publication Reader</p>
+            <p>&copy; 2025 LitLum</p>
         </div>
     </footer>
     

@@ -79,7 +79,7 @@ class CLI:
             Configured argument parser
         """
         parser = argparse.ArgumentParser(
-            description='Publication Reader - Monitor and analyze scientific publications'
+            description='LitLum - Monitor and analyze scientific publications'
         )
         
         subparsers = parser.add_subparsers(dest='command', help='Command')
@@ -114,7 +114,7 @@ class CLI:
         run_parser.add_argument('--reanalyze', action='store_true', help='Reanalyze already processed publications')
         
         # Reset command
-        reset_parser = subparsers.add_parser('reset', help='Reset the publication reader')
+        reset_parser = subparsers.add_parser('reset', help='Reset the LitLum application')
         reset_parser.add_argument('--force', action='store_true', help='Force reset without confirmation')
         reset_parser.add_argument('--keep-config', action='store_true', help='Keep configuration files')
         

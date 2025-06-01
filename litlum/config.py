@@ -1,4 +1,4 @@
-"""Configuration module for the publication reader application."""
+"""Configuration module for the LitLum application."""
 
 import os
 import yaml

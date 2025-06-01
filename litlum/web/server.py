@@ -55,7 +55,7 @@ def run_server(web_path: Optional[str] = None, port: int = 8080) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a web server for the publication reader")
+    parser = argparse.ArgumentParser(description="Run a web server for the LitLum application")
     parser.add_argument("--path", help="Path to the static website files")
     parser.add_argument("--port", type=int, default=8080, help="Port to run the server on")
     

@@ -1,1 +1,1 @@
-"""UI module for the publication reader application."""
+"""UI module for the LitLum application."""
