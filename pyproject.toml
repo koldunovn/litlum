@@ -29,6 +29,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest", "black", "isort", "mypy"]
 
+[project.scripts]
+litlum = "litlum.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["litlum*"]
