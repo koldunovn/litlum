@@ -1,4 +1,4 @@
-"""Command line interface for the publication reader application."""
+"""Command line interface for the LitLum application."""
 
 import sys
 import os
@@ -12,16 +12,16 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
 
-from publication_reader.config import Config
-from publication_reader.db.database import Database
-from publication_reader.feeds.parser import FeedParser
-from publication_reader.llm.analyzer import OllamaAnalyzer
-from publication_reader.reports.generator import ReportGenerator
-from publication_reader.web.static_site_generator import StaticSiteGenerator
+from litlum.config import Config
+from litlum.db.database import Database
+from litlum.feeds.parser import FeedParser
+from litlum.llm.analyzer import OllamaAnalyzer
+from litlum.reports.generator import ReportGenerator
+from litlum.web.static_site_generator import StaticSiteGenerator
 
 
 class CLI:
-    """Command line interface for the publication reader."""
+    """Command line interface for the LitLum application."""
     
     def __init__(self):
         """Initialize the CLI interface."""
@@ -79,7 +79,7 @@ class CLI:
             Configured argument parser
         """
         parser = argparse.ArgumentParser(
-            description='Publication Reader - Monitor and analyze scientific publications'
+            description='LitLum - Monitor and analyze scientific publications'
         )
         
         subparsers = parser.add_subparsers(dest='command', help='Command')
@@ -114,7 +114,7 @@ class CLI:
         run_parser.add_argument('--reanalyze', action='store_true', help='Reanalyze already processed publications')
         
         # Reset command
-        reset_parser = subparsers.add_parser('reset', help='Reset the publication reader')
+        reset_parser = subparsers.add_parser('reset', help='Reset the LitLum application')
         reset_parser.add_argument('--force', action='store_true', help='Force reset without confirmation')
         reset_parser.add_argument('--keep-config', action='store_true', help='Keep configuration files')
         
