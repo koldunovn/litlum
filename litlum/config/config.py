@@ -42,20 +42,26 @@ class Config:
 
     def _load_config(self) -> None:
         """Load configuration from file or create default."""
-        # Load default config first
+        # Load default config
+        print(f"[INFO] Loading default configuration from: {DEFAULT_CONFIG_PATH}")
         try:
             self._config = load_yaml_config(DEFAULT_CONFIG_PATH)
+            print("[INFO] Successfully loaded default configuration")
         except Exception as e:
+            print(f"[ERROR] Failed to load default config: {e}")
             raise RuntimeError(f"Failed to load default config: {e}")
         
-        # Override with user config if it exists
+        # Load user config if it exists
         if self.config_path.exists():
+            print(f"[INFO] Loading user configuration from: {self.config_path}")
             try:
                 user_config = load_yaml_config(self.config_path)
                 self._update_config(user_config)
+                print("[INFO] Successfully loaded user configuration")
             except Exception as e:
-                print(f"Warning: Failed to load user config: {e}")
-                print("Using default configuration")
+                print(f"[WARNING] Failed to load user config: {e}. Using default configuration.")
+        else:
+            print(f"[INFO] No user configuration found at {self.config_path}. Using default configuration.")
 
     def _update_config(self, new_config: Dict[str, Any], target: Optional[Dict[str, Any]] = None) -> None:
         """Recursively update the configuration.

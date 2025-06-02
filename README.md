@@ -194,46 +194,63 @@ python -m publication_reader reset --force
 
 ## Configuration
 
-The default configuration file is created at `~/.config/litlum/config.yaml` when you first run the application. You can edit this file to:
+LitLum uses a layered configuration system that loads settings in the following order (each layer overrides the previous one):
 
-1. Environment variables
-2. User configuration file (`~/.config/litlum/config.yaml`)
-3. Default configuration (included in the package)
+1. **Default Configuration** - Built-in default settings from `litlum/config/default-config.yaml`
+2. **User Configuration** - Custom settings from `~/.config/litlum/config.yaml` (if exists)
+3. **Environment Variables** - Specific path overrides (see below)
+
+### Viewing Current Configuration
+
+When you run any LitLum command, it will show which configuration files are being loaded:
+
+```
+[INFO] Loading default configuration from: /path/to/package/litlum/config/default-config.yaml
+[INFO] Successfully loaded default configuration
+[INFO] Loading user configuration from: /home/username/.config/litlum/config.yaml
+[INFO] Successfully loaded user configuration
+```
+
+If no user configuration is found, you'll see:
+
+```
+[INFO] Loading default configuration from: /path/to/package/litlum/config/default-config.yaml
+[INFO] Successfully loaded default configuration
+[INFO] No user configuration found at /home/username/.config/litlum/config.yaml. Using default configuration.
+```
+
+You can also check the configuration files directly:
+1. Default configuration: `litlum/config/default-config.yaml` in the package directory
+2. User configuration: `~/.config/litlum/config.yaml` (if it exists)
 
 ### Default Configuration
 
-The default configuration is included in the package and provides sensible defaults. You can view the default configuration by running:
-
-```bash
-litlum config show-default
-```
+The default configuration includes sensible defaults for all settings. You can find the complete default configuration in the package's `litlum/config/default-config.yaml`.
 
 ### User Configuration
 
-To customize the configuration, create a `config.yaml` file in `~/.config/litlum/`. The file will be merged with the default configuration, with your settings taking precedence.
+To customize settings, create a `config.yaml` file in `~/.config/litlum/`. This file will be merged with the default configuration, with your settings taking precedence.
 
-Example user configuration:
+Example user configuration (`~/.config/litlum/config.yaml`):
 
 ```yaml
-# ~/.config/litlum/config.yaml
-
 # Override database location
 database:
-  path: "/path/to/custom/location/litlum.db"
+  path: "/custom/path/publications.db"
 
-# Add your interests
+# Customize your interests
 interests:
   - "Arctic ocean"
   - "climate modelling"
   - "machine learning"
   - "ocean eddies"
 
-# Configure Ollama
+# Configure Ollama LLM settings
 ollama:
-  model: "llama3.2"
+  model: "llama3.2"  # or "gemma3:27b" for better results
   host: "http://localhost:11434"
 
-# Add more journal feeds
+# Add or modify journal feeds
 feeds:
   - name: "Nature Climate Change"
     type: "crossref"
@@ -243,18 +260,24 @@ feeds:
     type: "crossref"
     issn: "1095-9203"
     active: true
+
+# Reports configuration
+reports:
+  min_relevance: 5.0  # Minimum relevance score (0-10) for including publications in reports
+
+# Web interface settings
+web:
+  title: "My Custom LitLum"
 ```
 
 ### Environment Variables
 
-You can override configuration using environment variables:
+The following environment variables can be used to override specific paths:
 
-- `LITLUM_CONFIG_DIR`: Directory containing the config file (default: `~/.config/litlum`)
-- `LITLUM_DATA_DIR`: Base directory for data storage (default: `~/.local/share/litlum`)
-- `OLLAMA_HOST`: Ollama server URL (default: `http://localhost:11434`)
-- `LITLUM_DB_PATH`: Override database path
-- `LITLUM_REPORTS_PATH`: Override reports directory
-- `LITLUM_WEB_PATH`: Override web output directory
+- `LITLUM_REPORTS_DIR`: Override the directory for storing reports
+- `LITLUM_WEB_DIR`: Override the web output directory
+
+Note: Database path can only be configured through the config file, not via environment variables.
 
 ## Setting Up a Cron Job
 
