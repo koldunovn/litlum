@@ -1,0 +1,47 @@
+services:
+  litlum:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: litlum
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=host.docker.internal:11434
+      - LITLUM_CONFIG_DIR=/config
+      - LITLUM_DATA_DIR=/data
+      - XDG_DATA_HOME=/data
+      - LITLUM_WEB_DIR=/data/web
+      - LITLUM_REPORTS_DIR=/data/reports
+    volumes:
+      - ./config:/config  # Mount local config directory
+      - ./data:/data      # Mount local data directory
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      sh -c "mkdir -p /data/web /data/reports && \
+             chmod -R 777 /data && \
+             if [ ! -f /config/config.yaml ]; then \
+               cp /app/litlum/config/default-config.yaml /config/config.yaml; \
+             fi && \
+             litlum run \
+             echo 'Starting web server on http://localhost:8000' && \
+             ls -la /data/web && \
+             cd /data/web && \
+             python -m http.server 8000"
+
+  # Uncomment the following service if you want to run scheduled updates
+  # litlum-updater:
+  #   build: .
+  #   restart: unless-stopped
+  #   environment:
+  #     - OLLAMA_HOST=host.docker.internal:11434
+  #     - LITLUM_CONFIG_DIR=/config
+  #     - LITLUM_DATA_DIR=/data
+  #   volumes:
+  #     - ./config:/config
+  #     - ./data:/data
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   command: sh -c "while true; do litlum run; sleep 86400; done"  # Run once per day

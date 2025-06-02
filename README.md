@@ -9,7 +9,9 @@ A scientific publication monitoring and analysis application that tracks new pub
 - **SQLite Database**: Store publications, analysis results, and daily reports
 - **Rich CLI Interface**: User-friendly terminal interface with formatted output
 - **Static Web Interface**: Browse reports and publications through a clean, modern web UI
-- **Customizable**: Configure Journals, LLM prompts, and more via configuration file
+- **Customizable**: Configure journals, LLM prompts, and more via YAML configuration
+- **Docker Support**: Easy deployment using Docker containers
+- **Configuration Management**: Default configuration with user overrides
 
 ## Installation
 
@@ -192,48 +194,90 @@ python -m publication_reader reset --force
 
 ## Configuration
 
-The default configuration file is created at `~/.config/litlum/config.yaml` when you first run the application. You can edit this file to:
+LitLum uses a layered configuration system that loads settings in the following order (each layer overrides the previous one):
 
-- Add or modify RSS feeds
-- Configure the Ollama model and prompts
-- Change database and reports paths
+1. **Default Configuration** - Built-in default settings from `litlum/config/default-config.yaml`
+2. **User Configuration** - Custom settings from `~/.config/litlum/config.yaml` (if exists)
+3. **Environment Variables** - Specific path overrides (see below)
 
-Example configuration:
+### Viewing Current Configuration
 
-```yaml
-crossref:
-  days_range: 10
-database:
-  path: ~/.local/share/litlum/publications.db
-feeds:
-- issn: 2169-9291
-  name: JGR Oceans
-  type: crossref
-- issn: 1812-0792
-  name: Ocean Science
-  type: crossref
-
-interests:
-- Arctic ocean
-- climate modelling
-- high resolution modelling
-- sea ice
-- Southern Ocean
-- climate change
-ollama:
-  host: http://localhost:11434
-  model: llama3.2
-  relevance_prompt: 'Analyze this scientific publication and determine if it''s relevant
-    based on the following interests: {interests}. Rate relevance from 0-10 and explain
-    why. Keep your explanation brief (1-2 sentences).'
-  summary_prompt: 'Create a very concise summary (1-2 sentences) of this scientific
-    publication highlighting key findings and briefly explain its relevance to the
-    following interests: {interests}.'
-reports:
-  min_relevance: 5
-  path: ~/.local/share/litlum/reports
+When you run any LitLum command, it will show which configuration files are being loaded:
 
 ```
+[INFO] Loading default configuration from: /path/to/package/litlum/config/default-config.yaml
+[INFO] Successfully loaded default configuration
+[INFO] Loading user configuration from: /home/username/.config/litlum/config.yaml
+[INFO] Successfully loaded user configuration
+```
+
+If no user configuration is found, you'll see:
+
+```
+[INFO] Loading default configuration from: /path/to/package/litlum/config/default-config.yaml
+[INFO] Successfully loaded default configuration
+[INFO] No user configuration found at /home/username/.config/litlum/config.yaml. Using default configuration.
+```
+
+You can also check the configuration files directly:
+1. Default configuration: `litlum/config/default-config.yaml` in the package directory
+2. User configuration: `~/.config/litlum/config.yaml` (if it exists)
+
+### Default Configuration
+
+The default configuration includes sensible defaults for all settings. You can find the complete default configuration in the package's `litlum/config/default-config.yaml`.
+
+### User Configuration
+
+To customize settings, create a `config.yaml` file in `~/.config/litlum/`. This file will be merged with the default configuration, with your settings taking precedence.
+
+Example user configuration (`~/.config/litlum/config.yaml`):
+
+```yaml
+# Override database location
+database:
+  path: "/custom/path/publications.db"
+
+# Customize your interests
+interests:
+  - "Arctic ocean"
+  - "climate modelling"
+  - "machine learning"
+  - "ocean eddies"
+
+# Configure Ollama LLM settings
+ollama:
+  model: "llama3.2"  # or "gemma3:27b" for better results
+  host: "http://localhost:11434"
+
+# Add or modify journal feeds
+feeds:
+  - name: "Nature Climate Change"
+    type: "crossref"
+    issn: "1758-6798"
+    active: true
+  - name: "Science"
+    type: "crossref"
+    issn: "1095-9203"
+    active: true
+
+# Reports configuration
+reports:
+  min_relevance: 5.0  # Minimum relevance score (0-10) for including publications in reports
+
+# Web interface settings
+web:
+  title: "My Custom LitLum"
+```
+
+### Environment Variables
+
+The following environment variables can be used to override specific paths:
+
+- `LITLUM_REPORTS_DIR`: Override the directory for storing reports
+- `LITLUM_WEB_DIR`: Override the web output directory
+
+Note: Database path can only be configured through the config file, not via environment variables.
 
 ## Setting Up a Cron Job
 

@@ -35,3 +35,11 @@ ENV/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Docker data directories (only root level)
+/config/
+/data/
+
+# But keep these directories in the litlum package
+!/litlum/config/
+!/litlum/data/

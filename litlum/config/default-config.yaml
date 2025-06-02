@@ -1,0 +1,146 @@
+# Default configuration for LitLum
+
+# Global CrossRef settings
+crossref:
+  days_range: 10  # Default number of days to look back for all journals
+
+# Database configuration
+database:
+  path: "~/.local/share/litlum/publications.db"
+
+# Feed configuration
+feeds:
+  - name: "JGR Oceans"
+    type: "crossref"
+    issn: "2169-9291"
+    active: true
+  - name: "Ocean Science"
+    type: "crossref"
+    issn: "1812-0792"
+    active: true
+  - name: "BAMS"
+    type: "crossref"
+    issn: "1520-0477"
+    active: true
+  - name: "GMD"
+    type: "crossref"
+    issn: "1991-9603"
+    active: true
+  - name: "GRL"
+    type: "crossref"
+    issn: "1944-8007"
+    active: true
+  - name: "JAMES"
+    type: "crossref"
+    issn: "1942-2466"
+    active: true
+  - name: "JGR Atmospheres"
+    type: "crossref"
+    issn: "2169-8996"
+    active: true
+  - name: "Journal of Climate"
+    type: "crossref"
+    issn: "1520-0442"
+    active: true
+  - name: "JPO"
+    type: "crossref"
+    issn: "1520-0485"
+    active: true
+  - name: "Monthly Weather Review"
+    type: "crossref"
+    issn: "1520-0493"
+    active: true
+  - name: "Nature Climate Change"
+    type: "crossref"
+    issn: "1758-6798"
+    active: true
+  - name: "Nature Geoscience"
+    type: "crossref"
+    issn: "1752-0908"
+    active: true
+  - name: "Ocean Dynamics"
+    type: "crossref"
+    issn: "1616-7228"
+    active: true
+  - name: "Progress in Oceanography"
+    type: "crossref"
+    issn: "1873-4472"
+    active: true
+  - name: "Reviews of Geophysics"
+    type: "crossref"
+    issn: "1944-9208"
+    active: true
+  - name: "Ocean Modelling"
+    type: "crossref"
+    issn: "1463-5011"
+    active: true
+  - name: "The Cryosphere"
+    type: "crossref"
+    issn: "1994-0424"
+    active: true
+  - name: "Communications Earth & Environment"
+    type: "crossref"
+    issn: "2662-4435"
+    active: true
+  - name: "Nature"
+    type: "crossref"
+    issn: "1476-4687"
+    active: true
+  - name: "Science"
+    type: "crossref"
+    issn: "1095-9203"
+    active: true
+  - name: "GGR: MLC"
+    type: "crossref"
+    issn: "2993-5210"
+    active: true
+  - name: "Oceanography"
+    type: "crossref"
+    issn: "2377-617X"
+    active: true
+  - name: "Science Advances"
+    type: "crossref"
+    issn: "2375-2548"
+    active: true
+  - name: "PNAS"
+    type: "crossref"
+    issn: "1091-6490"
+    active: true
+    
+# User interests for filtering publications
+interests:
+  - "Arctic ocean"
+  - "climate modelling"
+  - "high resolution modelling"
+  - "artificial intelligence"
+  - "machine learning"
+  - "ocean modelling"
+  - "kilometer scale modelling"
+  - "mesoscale modelling"
+  - "sea ice"
+  - "ocean eddy"
+  - "ocean eddies"
+  - "FESOM"
+  - "Southern Ocean"
+  - "climate change"
+
+# Ollama LLM configuration
+ollama:
+  model: "llama3.2"  # default is llama3.2, but gemma3:27b works and shows better results
+  host: "http://localhost:11434"
+  relevance_prompt: "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences)."
+  summary_prompt: "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings."
+
+# Reports configuration
+reports:
+  path: "~/.local/share/litlum/reports"
+  min_relevance: 5
+
+# Web interface configuration
+web:
+  path: "~/.local/share/litlum/web"
+  title: "LitLum"
+
+# Application settings
+log_level: "INFO"
+update_interval: 3600  # in seconds
