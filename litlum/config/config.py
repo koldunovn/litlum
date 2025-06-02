@@ -40,28 +40,40 @@ class Config:
         self._config: Dict[str, Any] = {}
         self._load_config()
 
+    # Class-level flag to track if we've already printed config info
+    _config_loaded = False
+
     def _load_config(self) -> None:
         """Load configuration from file or create default."""
         # Load default config
-        print(f"[INFO] Loading default configuration from: {DEFAULT_CONFIG_PATH}")
+        if not Config._config_loaded:
+            print(f"[INFO] Loading default configuration from: {DEFAULT_CONFIG_PATH}")
+            
         try:
             self._config = load_yaml_config(DEFAULT_CONFIG_PATH)
-            print("[INFO] Successfully loaded default configuration")
+            if not Config._config_loaded:
+                print("[INFO] Successfully loaded default configuration")
         except Exception as e:
             print(f"[ERROR] Failed to load default config: {e}")
             raise RuntimeError(f"Failed to load default config: {e}")
         
         # Load user config if it exists
         if self.config_path.exists():
-            print(f"[INFO] Loading user configuration from: {self.config_path}")
+            if not Config._config_loaded:
+                print(f"[INFO] Loading user configuration from: {self.config_path}")
             try:
                 user_config = load_yaml_config(self.config_path)
                 self._update_config(user_config)
-                print("[INFO] Successfully loaded user configuration")
+                if not Config._config_loaded:
+                    print("[INFO] Successfully loaded user configuration")
             except Exception as e:
-                print(f"[WARNING] Failed to load user config: {e}. Using default configuration.")
-        else:
+                if not Config._config_loaded:
+                    print(f"[WARNING] Failed to load user config: {e}. Using default configuration.")
+        elif not Config._config_loaded:
             print(f"[INFO] No user configuration found at {self.config_path}. Using default configuration.")
+        
+        # Mark config as loaded after first successful load
+        Config._config_loaded = True
 
     def _update_config(self, new_config: Dict[str, Any], target: Optional[Dict[str, Any]] = None) -> None:
         """Recursively update the configuration.
