@@ -11,14 +11,19 @@ from ..config import Config
 class FeedParser:
     """Parser for scientific publications using CrossRef API."""
     
-    def __init__(self):
-        """Initialize the feed parser."""
+    def __init__(self, current_date=None):
+        """Initialize the feed parser.
+        
+        Args:
+            current_date: Optional datetime to use as current date (for testing)
+        """
         self.base_url = "https://api.crossref.org/works"
         self.user_agent = "PublicationReader/1.0 (mailto:you@awi.de)"  # Replace with your email
         self.config_manager = Config()
         # Don't call _load_config() here as it's already called in Config.__init__
         # and stores the config in self._config
         self.config = self.config_manager._config
+        self._current_date = current_date or datetime.now()
     
     def parse_feed(self, feed_config: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Parse publications from CrossRef API based on ISSN.
@@ -40,7 +45,7 @@ class FeedParser:
             # Get publications using journal-specific days_range if specified, otherwise use global default
             global_days_range = self.config.get('crossref', {}).get('days_range', 10)
             days_range = feed_config.get('days_range', global_days_range)
-            from_date = (datetime.now() - timedelta(days=days_range)).strftime("%Y-%m-%d")
+            from_date = (self._current_date - timedelta(days=days_range)).strftime("%Y-%m-%d")
             
             # Construct the API URL
             filter_params = f"issn:{issn},from-pub-date:{from_date},has-abstract:true"

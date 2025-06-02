@@ -171,23 +171,17 @@ class TestFeedParser(unittest.TestCase):
         self.assertIsNone(result)
         
     @patch('requests.get')
-    @patch('datetime.datetime')
     @patch('litlum.feeds.parser.Config')
-    def test_custom_days_range(self, mock_config, mock_datetime, mock_get):
+    def test_custom_days_range(self, mock_config, mock_get):
         """Test that days_range parameter is used correctly."""
-        # Mock config to return a global days_range of 10
+        # Mock the config to return a specific days_range
         mock_config_instance = MagicMock()
-        mock_config_instance._load_config.return_value = {
+        mock_config_instance._config = {
             'crossref': {
                 'days_range': 10
             }
         }
         mock_config.return_value = mock_config_instance
-        
-        # Mock the current date to a fixed value
-        mock_now = MagicMock()
-        mock_now.strftime.return_value = "2025-05-31"
-        mock_datetime.now.return_value = mock_now
         
         # Create a mock response
         mock_response = MagicMock()
@@ -206,8 +200,12 @@ class TestFeedParser(unittest.TestCase):
             'days_range': 7  # 7 days instead of global default 10
         }
         
-        # Reset and re-initialize the parser to use our mocked config
-        self.parser = FeedParser()
+        # Create a fixed date for testing (2025-05-31)
+        from datetime import datetime
+        test_date = datetime(2025, 5, 31)
+        
+        # Initialize the parser with the fixed date
+        self.parser = FeedParser(current_date=test_date)
         
         # Call the parse_feed method
         self.parser.parse_feed(custom_feed_config)
@@ -217,8 +215,8 @@ class TestFeedParser(unittest.TestCase):
         # The from-pub-date should be 7 days back from 2025-05-31
         # Since the URL parameters are encoded, we need to check the encoded value
         # Note: The implementation uses timedelta(days=days_range), which makes it exclusive of the start date
-        # So for 7 days range from 2025-05-31, it should be 2025-05-25
-        encoded_param = quote('from-pub-date:2025-05-25')
+        # So for 7 days range from 2025-05-31, it should be 2025-05-24
+        encoded_param = quote('from-pub-date:2025-05-24')
         self.assertIn(encoded_param, called_url)
 
 
