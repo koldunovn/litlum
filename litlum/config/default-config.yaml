@@ -4,6 +4,10 @@
 crossref:
   days_range: 10  # Default number of days to look back for all journals
 
+# Global DataCite (arXiv) settings
+datacite:
+  days_range: 10  # Default number of days to look back for arXiv subjects
+
 # Database configuration
 database:
   path: "~/.local/share/litlum/publications.db"
@@ -105,6 +109,15 @@ feeds:
   - name: "PNAS"
     type: "crossref"
     issn: "1091-6490"
+    active: true
+  # arXiv categories via DataCite
+  - name: "cs.AI"
+    type: "arxiv"
+    category: "cs.AI"
+    active: true
+  - name: "physics.ao-ph"
+    type: "arxiv"
+    category: "physics.ao-ph"
     active: true
     
 # User interests for filtering publications
