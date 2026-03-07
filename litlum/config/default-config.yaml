@@ -121,28 +121,53 @@ feeds:
     active: true
     
 # User interests for filtering publications
+# Provide descriptive phrases so the LLM understands what you care about and why.
 interests:
-  - "Arctic ocean"
-  - "climate modelling"
-  - "high resolution modelling"
-  - "artificial intelligence"
-  - "machine learning"
-  - "ocean modelling"
-  - "kilometer scale modelling"
-  - "mesoscale modelling"
-  - "sea ice"
-  - "ocean eddy"
-  - "ocean eddies"
-  - "FESOM"
-  - "Southern Ocean"
-  - "climate change"
+  - "Arctic Ocean circulation, water mass transformation, and Atlantic Water inflow"
+  - "Climate modelling and Earth system models, especially at high resolution"
+  - "High-resolution and kilometer-scale ocean and atmosphere modelling"
+  - "Machine learning and AI applied to climate science, weather prediction, or ocean modelling"
+  - "Ocean general circulation models, especially FESOM (Finite-volume Element Sea ice Ocean Model) and similar unstructured-mesh models"
+  - "Mesoscale and submesoscale ocean dynamics, eddies, and their role in ocean circulation"
+  - "Sea ice dynamics, thermodynamics, and modelling in polar regions"
+  - "Southern Ocean dynamics, overturning circulation, and its role in global climate"
+  - "Climate change impacts on ocean circulation, polar regions, and extreme weather"
 
 # Ollama LLM configuration
 ollama:
   model: "llama3.2"  # default is llama3.2, but gemma3:27b works and shows better results
   host: "http://localhost:11434"
-  relevance_prompt: "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences)."
-  summary_prompt: "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings."
+  system_prompt: >
+    You are a research assistant helping a scientist monitor new publications.
+    Your job is to assess whether papers are relevant to the researcher's interests
+    and provide concise, informative analysis. Be precise with your relevance scores
+    and focus on methodological and scientific substance, not just keyword overlap.
+  relevance_prompt: >
+    Assess the relevance of this publication to the researcher's interests listed below.
+
+    RESEARCHER'S INTERESTS:
+    {interests}
+
+    SCORING RUBRIC:
+    9-10: Directly addresses a core interest. The researcher would want to read this immediately.
+    7-8: Strongly related to one or more interests. Uses relevant methods or studies relevant systems.
+    5-6: Tangentially related. Shares a broad topic area but different focus or methods.
+    3-4: Weak connection. Only loosely related through a shared general field.
+    0-2: Not relevant. Different field or topic entirely.
+
+    IMPORTANT GUIDELINES:
+    - A paper about ocean modelling is NOT automatically relevant — it must connect to the specific interests above.
+    - Keyword overlap alone is not enough. Consider whether the scientific substance matches.
+    - Papers applying ML/AI to unrelated domains (e.g., medical imaging, NLP) score 0-2 despite the AI interest.
+    - General climate/ocean papers without connection to the specific interests score 3-5.
+
+    Respond in this exact format:
+    SCORE: <number>/10
+    REASON: <1-2 sentences explaining why>
+  summary_prompt: >
+    Summarize this scientific publication in 1-2 sentences.
+    Focus on: what was done, what method was used, and what the key finding is.
+    Do not repeat the title. Do not use filler phrases like "This paper presents".
 
 # Reports configuration
 reports:

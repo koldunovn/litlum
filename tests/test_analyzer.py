@@ -22,19 +22,30 @@ class TestOllamaAnalyzer(unittest.TestCase):
         self.mock_config = {
             "model": "llama3.2",
             "host": "http://localhost:11434",
-            "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: test interest. Rate relevance from 0-10 and explain why.",
-            "summary_prompt": "Create a concise summary of this scientific publication highlighting key findings and methodology."
+            "system_prompt": "You are a research assistant.",
+            "relevance_prompt": "Assess relevance based on these interests: test interest. Respond with SCORE: N/10 and REASON.",
+            "summary_prompt": "Summarize this publication in 1-2 sentences."
         }
         self.analyzer = OllamaAnalyzer(self.mock_config)
 
     @patch('ollama.chat')
+    def test_extract_relevance_score_format(self, mock_ollama_chat):
+        """Test extracting relevance score from 'SCORE: N/10' format."""
+        mock_ollama_chat.return_value = {
+            'message': {'content': 'SCORE: 7/10\nREASON: Directly related to ocean modelling interests.'}
+        }
+
+        relevance, explanation = self.analyzer._determine_relevance("Test Title", "Test Abstract")
+        self.assertEqual(relevance, 7)
+        self.assertIn("ocean modelling", explanation)
+
+    @patch('ollama.chat')
     def test_extract_relevance_standard_format(self, mock_ollama_chat):
         """Test extracting relevance score from standard 'N/10' format."""
-        # Mock the ollama.chat response
         mock_ollama_chat.return_value = {
             'message': {'content': 'I would rate the relevance of this publication as 7/10.'}
         }
-        
+
         relevance, explanation = self.analyzer._determine_relevance("Test Title", "Test Abstract")
         self.assertEqual(relevance, 7)
 
@@ -94,13 +105,23 @@ class TestOllamaAnalyzer(unittest.TestCase):
         self.assertEqual(relevance, 0)  # Should default to 0 if no score found
 
     @patch('ollama.chat')
-    def test_extract_explanation(self, mock_ollama_chat):
-        """Test extracting the explanation from the LLM response."""
-        # Mock the ollama.chat response with an explanation
+    def test_extract_explanation_reason_format(self, mock_ollama_chat):
+        """Test extracting the explanation from REASON: format."""
+        mock_ollama_chat.return_value = {
+            'message': {'content': 'SCORE: 8/10\nREASON: This is highly relevant because it covers multiple interests directly.'}
+        }
+
+        relevance, explanation = self.analyzer._determine_relevance("Test Title", "Test Abstract")
+        self.assertEqual(relevance, 8)
+        self.assertIn("highly relevant", explanation)
+
+    @patch('ollama.chat')
+    def test_extract_explanation_legacy_format(self, mock_ollama_chat):
+        """Test extracting the explanation from legacy Explanation: format."""
         mock_ollama_chat.return_value = {
             'message': {'content': 'I would rate this 8/10.\n\nExplanation: This is highly relevant because it covers multiple interests directly.'}
         }
-        
+
         relevance, explanation = self.analyzer._determine_relevance("Test Title", "Test Abstract")
         self.assertEqual(relevance, 8)
         self.assertIn("highly relevant", explanation)
@@ -117,7 +138,7 @@ class TestOllamaAnalyzer(unittest.TestCase):
         self.assertIn(abstract, prompt)
         
         # Verify it contains the base prompt from config
-        self.assertIn("Analyze this scientific publication", prompt)
+        self.assertIn("Assess relevance", prompt)
 
 
 if __name__ == "__main__":

@@ -128,16 +128,17 @@ class Config:
         """Get Ollama LLM configuration with interests formatted into prompts."""
         ollama_config = self.get("ollama") or {}
         interests = self.get("interests") or []
-        
+        interests_formatted = "\n".join(f"- {interest}" for interest in interests)
+
         # Format prompts with interests if they contain {interests} placeholder
         if "system_prompt" in ollama_config and "{interests}" in ollama_config["system_prompt"]:
             ollama_config["system_prompt"] = ollama_config["system_prompt"].format(
-                interests=", ".join(interests)
+                interests=interests_formatted
             )
-            
+
         if "relevance_prompt" in ollama_config and "{interests}" in ollama_config["relevance_prompt"]:
             ollama_config["relevance_prompt"] = ollama_config["relevance_prompt"].format(
-                interests=", ".join(interests)
+                interests=interests_formatted
             )
             
         return ollama_config

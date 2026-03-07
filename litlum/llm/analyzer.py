@@ -37,6 +37,7 @@ class OllamaAnalyzer:
         """
         self.model = config.get('model', 'llama3.2')
         self.host = config.get('host', 'http://localhost:11434')
+        self.system_prompt = config.get('system_prompt', '')
         self.relevance_prompt = config.get('relevance_prompt', '')
         self.summary_prompt = config.get('summary_prompt', '')
         
@@ -104,14 +105,14 @@ class OllamaAnalyzer:
             console.print(Syntax(prompt, "text", theme="monokai", word_wrap=True), style="prompt")
             
             # Call the LLM
+            messages = []
+            if self.system_prompt:
+                messages.append({'role': 'system', 'content': self.system_prompt})
+            messages.append({'role': 'user', 'content': prompt})
+
             response = ollama.chat(
-                model=self.model, 
-                messages=[
-                    {
-                        'role': 'user',
-                        'content': prompt
-                    }
-                ]
+                model=self.model,
+                messages=messages
             )
             
             # Extract the response text
@@ -122,21 +123,24 @@ class OllamaAnalyzer:
             console.print(Syntax(response_text, "text", theme="monokai", word_wrap=True), style="response")
             
             # Try multiple patterns to extract relevance score (models format scores differently)
-            # First try the standard N/10 format
-            relevance_match = re.search(r'\b([0-9]|10)\s*\/\s*10\b', response_text)
-            
-            # If that fails, try other common formats
+            # First try the explicit SCORE: N/10 format from our prompt
+            relevance_match = re.search(r'SCORE:\s*([0-9]|10)\s*\/\s*10', response_text, re.IGNORECASE)
+
+            # Then try the general N/10 format
             if not relevance_match:
-                # Try formats like "Relevance: 7" or "Score: 7" or "Rating: 7"
-                relevance_match = re.search(r'(?:relevance|score|rating)\s*(?:is|:)\s*([0-9]|10)\b', 
+                relevance_match = re.search(r'\b([0-9]|10)\s*\/\s*10\b', response_text)
+
+            # Try formats like "Relevance: 7" or "Score: 7" or "Rating: 7"
+            if not relevance_match:
+                relevance_match = re.search(r'(?:relevance|score|rating)\s*(?:is|:)\s*([0-9]|10)\b',
                                           response_text, re.IGNORECASE)
-            
+
             # Try a simple number after the word "score" or similar
             if not relevance_match:
-                relevance_match = re.search(r'(?:score|rating|relevance).*?([0-9]|10)\b', 
+                relevance_match = re.search(r'(?:score|rating|relevance).*?([0-9]|10)\b',
                                           response_text, re.IGNORECASE)
-                
-            # Last resort - just find any number between 0-10 
+
+            # Last resort - just find any number between 0-10
             if not relevance_match:
                 relevance_match = re.search(r'\b([0-9]|10)\b', response_text)
             
@@ -155,9 +159,11 @@ class OllamaAnalyzer:
             # Use the first captured group as the relevance score
             relevance_score = int(relevance_match.group(1)) if relevance_match else 0
             
-            # Extract the explanation
-            explanation_match = re.search(r'(?:explanation|because|as)[:.]?\s*(.+)', 
-                                        response_text, re.IGNORECASE | re.DOTALL)
+            # Extract the explanation — try REASON: first, then fallbacks
+            explanation_match = re.search(r'REASON:\s*(.+)', response_text, re.IGNORECASE | re.DOTALL)
+            if not explanation_match:
+                explanation_match = re.search(r'(?:explanation|because|reasoning)[:.]?\s*(.+)',
+                                            response_text, re.IGNORECASE | re.DOTALL)
             explanation = explanation_match.group(1).strip() if explanation_match else ""
             
             score_style = "success" if relevance_score >= 7 else "warning" if relevance_score >= 5 else "error"
@@ -190,19 +196,16 @@ class OllamaAnalyzer:
             prompt = f"{self.summary_prompt}\n\n"
             prompt += f"Journal: {journal}\n"
             prompt += f"Title: {title}\n"
-            prompt += f"Abstract: {abstract}\n\n"
-            prompt += f"This publication has been rated {relevance_score}/10 for relevance.\n\n"
-            prompt += f"IMPORTANT: Be EXTREMELY concise. Limit your entire response to 1-2 sentences total.\n"
-            prompt += f"Just provide a single concise statement about what the paper does.\n"
-            
+            prompt += f"Abstract: {abstract}\n"
+
+            messages = []
+            if self.system_prompt:
+                messages.append({'role': 'system', 'content': self.system_prompt})
+            messages.append({'role': 'user', 'content': prompt})
+
             response = ollama.chat(
-                model=self.model, 
-                messages=[
-                    {
-                        'role': 'user',
-                        'content': prompt
-                    }
-                ]
+                model=self.model,
+                messages=messages
             )
             
             # Get the raw summary without truncation

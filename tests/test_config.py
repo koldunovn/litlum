@@ -39,8 +39,8 @@ class TestConfig(unittest.TestCase):
             "ollama": {
                 "model": "llama3.2",
                 "host": "http://localhost:11434",
-                "relevance_prompt": "Analyze this scientific publication and determine if it's relevant based on the following interests: {interests}. Rate relevance from 0-10 and explain why. Keep your explanation brief (1-2 sentences).",
-                "summary_prompt": "Create a very concise summary (1-2 sentences) of this scientific publication highlighting key findings and briefly explain its relevance to the following interests: {interests}."
+                "relevance_prompt": "Assess relevance based on these interests: {interests}. Respond with SCORE: N/10 and REASON.",
+                "summary_prompt": "Summarize this publication in 1-2 sentences focusing on method and key finding."
             },
             "reports": {
                 "path": "~/test/reports",
@@ -114,12 +114,8 @@ class TestConfig(unittest.TestCase):
         ollama_config = config.get_ollama_config()
         
         # Verify the prompts are formatted with interests
-        interests_str = ", ".join(self.test_config["interests"])
-        self.assertIn(interests_str, ollama_config["relevance_prompt"])
-        
-        # The summary prompt should match exactly what's in the test config
-        expected_summary_prompt = self.test_config["ollama"]["summary_prompt"]
-        self.assertEqual(ollama_config["summary_prompt"], expected_summary_prompt)
+        for interest in self.test_config["interests"]:
+            self.assertIn(interest, ollama_config["relevance_prompt"])
         
         # Make sure the placeholders are replaced in the relevance prompt
         self.assertNotIn("{interests}", ollama_config["relevance_prompt"])
