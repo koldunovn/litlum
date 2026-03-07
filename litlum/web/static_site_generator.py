@@ -2,11 +2,16 @@
 
 import os
 import json
+import html as html_module
 import shutil
+import time as _time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import re
+
+# Cache-busting version string based on build time
+_ASSET_VERSION = str(int(_time.time()))
 
 class StaticSiteGenerator:
     """Generate static HTML pages for LitLum reports."""
@@ -205,6 +210,11 @@ class StaticSiteGenerator:
                 summary = pub.get('llm_summary', 'No summary available')
                 abstract = pub.get('abstract', 'No abstract available')
                 
+                # Escape data for HTML attributes
+                copy_title = html_module.escape(title, quote=True)
+                copy_summary = html_module.escape(summary, quote=True)
+                copy_url = html_module.escape(url, quote=True)
+
                 # Create table row
                 pubs_html += f"""
                 <tr>
@@ -214,6 +224,7 @@ class StaticSiteGenerator:
                     <td>
                         {doi_link}
                         <button class="details-button" onclick="toggleDetails('{pub_id}')">Details</button>
+                        <button class="copy-button" onclick="copyPublicationInfo(this)" data-title="{copy_title}" data-summary="{copy_summary}" data-url="{copy_url}">Copy</button>
                     </td>
                 </tr>
                 <tr class="details-row" id="{pub_id}" style="display: none;">
@@ -255,6 +266,11 @@ class StaticSiteGenerator:
         Returns:
             HTML template as string
         """
+        template = self._get_raw_template(template_name)
+        return template.replace("{{ASSET_VERSION}}", _ASSET_VERSION)
+
+    def _get_raw_template(self, template_name: str) -> str:
+        """Get a raw HTML template string."""
         if template_name == "index":
             return """<!DOCTYPE html>
 <html lang="en">
@@ -262,7 +278,7 @@ class StaticSiteGenerator:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LitLum - Reports</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/styles.css?v={{ASSET_VERSION}}">
 </head>
 <body>
     <header>
@@ -286,7 +302,7 @@ class StaticSiteGenerator:
         </div>
     </footer>
     
-    <script src="assets/scripts.js"></script>
+    <script src="assets/scripts.js?v={{ASSET_VERSION}}"></script>
 </body>
 </html>"""
         elif template_name == "report":
@@ -296,7 +312,7 @@ class StaticSiteGenerator:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report - {{REPORT_DATE}} - LitLum</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/styles.css?v={{ASSET_VERSION}}">
 </head>
 <body>
     <header>
@@ -329,7 +345,7 @@ class StaticSiteGenerator:
         </div>
     </footer>
     
-    <script src="assets/scripts.js"></script>
+    <script src="assets/scripts.js?v={{ASSET_VERSION}}"></script>
 </body>
 </html>"""
         else:

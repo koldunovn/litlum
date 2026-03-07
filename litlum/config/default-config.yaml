@@ -135,7 +135,7 @@ interests:
 
 # Ollama LLM configuration
 ollama:
-  model: "llama3.2"  # default is llama3.2, but gemma3:27b works and shows better results
+  model: "gpt-oss:20b"
   host: "http://localhost:11434"
   system_prompt: >
     You are a research assistant helping a scientist monitor new publications.

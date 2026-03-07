@@ -20,7 +20,7 @@ class TestOllamaAnalyzer(unittest.TestCase):
         """Set up test cases."""
         # Create a mock config dictionary for testing
         self.mock_config = {
-            "model": "llama3.2",
+            "model": "gpt-oss:20b",
             "host": "http://localhost:11434",
             "system_prompt": "You are a research assistant.",
             "relevance_prompt": "Assess relevance based on these interests: test interest. Respond with SCORE: N/10 and REASON.",

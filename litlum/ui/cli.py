@@ -473,7 +473,7 @@ class CLI:
         
         # Analyze publications
         self.console.print("\n[bold]Step 2: Analyzing publications...[/bold]")
-        analyze_args = argparse.Namespace(date=None, reanalyze=False)
+        analyze_args = argparse.Namespace(date=None, reanalyze=getattr(args, 'reanalyze', False))
         self._handle_analyze(analyze_args)
         
         # Generate report

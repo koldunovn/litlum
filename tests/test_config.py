@@ -37,7 +37,7 @@ class TestConfig(unittest.TestCase):
                 "path": "~/test/publications.db"
             },
             "ollama": {
-                "model": "llama3.2",
+                "model": "gpt-oss:20b",
                 "host": "http://localhost:11434",
                 "relevance_prompt": "Assess relevance based on these interests: {interests}. Respond with SCORE: N/10 and REASON.",
                 "summary_prompt": "Summarize this publication in 1-2 sentences focusing on method and key finding."

@@ -35,7 +35,7 @@ class OllamaAnalyzer:
         Args:
             config: Ollama configuration dictionary
         """
-        self.model = config.get('model', 'llama3.2')
+        self.model = config.get('model', 'gpt-oss:20b')
         self.host = config.get('host', 'http://localhost:11434')
         self.system_prompt = config.get('system_prompt', '')
         self.relevance_prompt = config.get('relevance_prompt', '')
